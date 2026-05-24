@@ -1,0 +1,980 @@
+<!DOCTYPE html>
+<html lang="ro">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI Ethics & Compliance — Studiu de Caz Interactiv</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+  :root {
+    --navy: #0f1b35; --navy-mid: #1a2d52; --ice: #c8daf0;
+    --gold: #e8a020; --gold-light: #f5c960;
+    --danger: #c0392b; --danger-light: #fdecea;
+    --warning: #d4880a;
+    --success: #1a7a4a; --success-light: #d4f0e3;
+    --off-white: #f4f7fb; --gray: #8a96a8; --text: #1e2a3a;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--off-white); color: var(--text); min-height: 100vh; }
+
+  /* HEADER */
+  header { background: var(--navy); color: white; position: relative; overflow: hidden; }
+  .header-inner { max-width: 920px; margin: 0 auto; padding: 40px 24px 32px; position: relative; z-index: 1; }
+  .header-badge { display: inline-block; background: var(--gold); color: var(--navy); font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; padding: 5px 14px; border-radius: 2px; margin-bottom: 18px; }
+  header h1 { font-family: 'Playfair Display', serif; font-size: clamp(24px, 5vw, 38px); font-weight: 900; line-height: 1.15; margin-bottom: 10px; }
+  header h1 span { color: var(--gold-light); }
+  header p { color: var(--ice); font-size: 15px; font-weight: 300; max-width: 560px; line-height: 1.6; }
+  .header-deco { position: absolute; right: -60px; top: -60px; width: 340px; height: 340px; border-radius: 50%; border: 60px solid rgba(200,218,240,0.07); pointer-events: none; }
+  .header-deco2 { position: absolute; right: 80px; bottom: -80px; width: 200px; height: 200px; border-radius: 50%; border: 40px solid rgba(232,160,32,0.08); pointer-events: none; }
+
+  /* PROGRESS */
+  .progress-bar-wrap { background: var(--navy-mid); padding: 14px 24px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .progress-steps { display: flex; gap: 6px; align-items: center; }
+  .step-dot { width: 10px; height: 10px; border-radius: 50%; background: rgba(255,255,255,0.2); cursor: pointer; transition: all 0.25s; }
+  .step-dot.active { background: var(--gold); transform: scale(1.4); }
+  .step-dot.done { background: var(--gold-light); opacity: 0.6; }
+  .progress-text { color: var(--ice); font-size: 13px; font-weight: 500; }
+  .score-badge { background: rgba(232,160,32,0.15); color: var(--gold-light); border: 1px solid rgba(232,160,32,0.3); padding: 4px 14px; border-radius: 20px; font-size: 13px; font-weight: 600; margin-left: auto; }
+
+  /* MAIN */
+  main { max-width: 920px; margin: 0 auto; padding: 32px 20px 60px; }
+
+  /* CARD */
+  .card { background: white; border-radius: 12px; box-shadow: 0 2px 20px rgba(15,27,53,0.08); overflow: hidden; display: none; animation: fadeIn 0.35s ease; }
+  .card.visible { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .card-header { padding: 28px 32px 20px; border-bottom: 1px solid #edf0f5; }
+  .section-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .card-header h2 { font-family: 'Playfair Display', serif; font-size: clamp(20px, 4vw, 26px); font-weight: 700; color: var(--navy); line-height: 1.2; }
+  .card-header p { margin-top: 8px; color: var(--gray); font-size: 14px; line-height: 1.6; }
+  .card-body { padding: 28px 32px; }
+
+  /* SCENARIO BOX */
+  .scenario-box { background: linear-gradient(135deg, #f0f5fc 0%, #e8f0fa 100%); border-left: 4px solid var(--navy); border-radius: 0 8px 8px 0; padding: 18px 22px; margin-bottom: 28px; }
+  .scenario-box strong { display: block; font-size: 14px; font-weight: 700; color: var(--navy); margin-bottom: 6px; }
+  .scenario-box p { font-size: 14px; line-height: 1.65; color: #3a4a60; }
+  .scenario-box .tag { display: inline-block; margin-top: 10px; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; padding: 3px 10px; border-radius: 3px; background: var(--navy); color: white; }
+
+  /* QUESTION */
+  .question-block { margin-bottom: 30px; padding-bottom: 30px; border-bottom: 1px solid #edf0f5; }
+  .question-block:last-of-type { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+  .q-label { font-size: 11px; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--gold); margin-bottom: 8px; }
+  .q-text { font-size: 15px; font-weight: 600; color: var(--navy); line-height: 1.45; margin-bottom: 14px; }
+
+  /* OPTIONS */
+  .options { display: flex; flex-direction: column; gap: 9px; }
+  .option { display: flex; align-items: flex-start; gap: 12px; padding: 13px 16px; border: 2px solid #e0e8f4; border-radius: 8px; cursor: pointer; transition: all 0.2s; background: white; }
+  .option:hover:not(.disabled) { border-color: var(--navy); background: #f7faff; }
+  .option.selected { border-color: var(--navy); background: #eef4ff; }
+  .option.correct { border-color: var(--success); background: var(--success-light); }
+  .option.wrong { border-color: var(--danger); background: var(--danger-light); }
+  .option.disabled { cursor: default; }
+  .opt-radio { width: 20px; height: 20px; border-radius: 50%; border: 2px solid #c0ccdc; flex-shrink: 0; margin-top: 1px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+  .option.correct .opt-radio { border-color: var(--success); background: var(--success); }
+  .option.wrong .opt-radio { border-color: var(--danger); background: var(--danger); }
+  .opt-radio::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: white; opacity: 0; transition: opacity 0.15s; }
+  .option.correct .opt-radio::after, .option.wrong .opt-radio::after { opacity: 1; }
+  .opt-text { font-size: 14px; line-height: 1.5; color: var(--text); padding-top: 1px; flex: 1; }
+  .opt-badge { font-size: 17px; opacity: 0; transition: opacity 0.2s; flex-shrink: 0; }
+  .option.correct .opt-badge, .option.wrong .opt-badge { opacity: 1; }
+
+  /* FEEDBACK */
+  .feedback { display: none; padding: 13px 16px; border-radius: 8px; margin-top: 10px; font-size: 13.5px; line-height: 1.6; }
+  .feedback.show { display: block; animation: fadeIn 0.25s ease; }
+  .feedback.ok { background: var(--success-light); border-left: 4px solid var(--success); color: #0f4a2e; }
+  .feedback.nok { background: var(--danger-light); border-left: 4px solid var(--danger); color: #7a1212; }
+  .feedback strong { display: block; margin-bottom: 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+
+  /* TEXTAREA */
+  textarea { width: 100%; padding: 13px 15px; border: 2px solid #e0e8f4; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 14px; line-height: 1.6; color: var(--text); resize: vertical; min-height: 90px; transition: border-color 0.2s; background: #fbfcff; }
+  textarea:focus { outline: none; border-color: var(--navy); background: white; }
+  textarea::placeholder { color: #a0afc0; }
+
+  /* RISK MODULE */
+  .risk-instruction { background: #fffbe8; border: 1px solid #f5c960; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #7a5000; margin-bottom: 18px; }
+  .risk-chips-wrap { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; padding: 16px; background: #f8fafd; border-radius: 10px; border: 1px dashed #c8d8ee; min-height: 60px; }
+  .risk-chip { background: white; border: 2px solid #c8d8ee; border-radius: 7px; padding: 9px 14px; font-size: 13px; font-weight: 500; color: var(--navy); cursor: pointer; user-select: none; transition: all 0.2s; }
+  .risk-chip:hover { border-color: var(--navy); background: #f0f5fd; }
+  .risk-chip.selected-chip { border-color: var(--gold); background: #fffbe8; box-shadow: 0 0 0 3px rgba(232,160,32,0.2); }
+  .risk-chip.placed { opacity: 0.4; cursor: default; border-style: dashed; }
+  .risk-levels { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .risk-level { border-radius: 10px; padding: 14px 16px; min-height: 90px; border: 2px dashed; cursor: pointer; transition: all 0.2s; }
+  .risk-level:hover { filter: brightness(0.97); }
+  .risk-level.interzis { background: #fff3f2; border-color: #e74c3c; }
+  .risk-level.inalt { background: #fffbee; border-color: #e67e22; }
+  .risk-level.limitat { background: #f0f6ff; border-color: #2980b9; }
+  .risk-level.minim { background: #f0fff5; border-color: #27ae60; }
+  .risk-level h4 { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 10px; }
+  .risk-level.interzis h4 { color: #e74c3c; } .risk-level.inalt h4 { color: #e67e22; } .risk-level.limitat h4 { color: #2980b9; } .risk-level.minim h4 { color: #27ae60; }
+  .placed-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .placed-tag { font-size: 12px; padding: 4px 10px; border-radius: 4px; font-weight: 600; cursor: pointer; }
+  .interzis .placed-tag { background: #fccfcc; color: #7a1212; }
+  .inalt .placed-tag { background: #fde8c3; color: #7a3a00; }
+  .limitat .placed-tag { background: #d6e9ff; color: #0a3a6e; }
+  .minim .placed-tag { background: #c8f0da; color: #0a4a25; }
+  .rl-empty { font-size: 12px; color: #a0afc0; font-style: italic; }
+
+  /* SANCTIONS MODULE - redesigned */
+  .sanction-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; }
+  .sanction-col-title { font-size: 11px; font-weight: 700; letter-spacing: 1.5px; text-transform: uppercase; color: var(--gray); margin-bottom: 10px; text-align: center; }
+  .sanction-item { padding: 13px 16px; border: 2px solid #e0e8f4; border-radius: 8px; cursor: pointer; font-size: 13px; line-height: 1.45; font-weight: 500; margin-bottom: 8px; transition: all 0.2s; background: white; text-align: center; user-select: none; }
+  .sanction-item:hover:not(.matched-item):not(.disabled-item) { border-color: var(--navy); background: #f7faff; }
+  .sanction-item.sel-left { border-color: var(--gold); background: #fffbe8; box-shadow: 0 0 0 3px rgba(232,160,32,0.2); }
+  .sanction-item.sel-right { border-color: var(--gold); background: #fffbe8; box-shadow: 0 0 0 3px rgba(232,160,32,0.2); }
+  .sanction-item.matched-item { border-color: var(--success); background: var(--success-light); cursor: default; color: var(--success); font-weight: 700; }
+  .sanction-item.wrong-flash { border-color: var(--danger); background: var(--danger-light); animation: wrongFlash 0.5s ease; }
+  @keyframes wrongFlash { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .sanction-score-line { font-size: 13px; color: var(--gray); text-align: center; margin-bottom: 8px; }
+
+  /* POLICY */
+  .policy-section { border: 2px solid #e0e8f4; border-radius: 10px; margin-bottom: 14px; overflow: hidden; }
+  .policy-section-head { background: #f5f8fd; padding: 13px 18px; display: flex; align-items: center; gap: 10px; }
+  .policy-num { width: 26px; height: 26px; background: var(--navy); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .policy-section-head strong { font-size: 14px; color: var(--navy); }
+  .policy-section-body { padding: 14px 18px; background: white; }
+
+  /* RULES */
+  .rule-list { list-style: none; }
+  .rule-list li { display: flex; align-items: flex-start; gap: 12px; padding: 12px 0; border-bottom: 1px solid #edf0f5; font-size: 14px; line-height: 1.5; }
+  .rule-list li:last-child { border-bottom: none; }
+  .rule-num { min-width: 28px; height: 28px; background: var(--navy); color: white; border-radius: 50%; font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .rule-check { margin-left: auto; cursor: pointer; font-size: 22px; transition: transform 0.15s; user-select: none; flex-shrink: 0; }
+  .rule-check:hover { transform: scale(1.2); }
+
+  /* COMMITMENT BOX */
+  .commitment-box { background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%); border-radius: 12px; padding: 22px 26px; color: white; margin-top: 20px; }
+  .commitment-box h3 { font-family: 'Playfair Display', serif; margin-bottom: 10px; font-size: 18px; }
+  .commitment-box p { font-size: 13px; color: rgba(255,255,255,0.65); margin-bottom: 12px; }
+  .commitment-box textarea { background: rgba(255,255,255,0.08); color: white; border-color: rgba(255,255,255,0.2); }
+  .commitment-box textarea::placeholder { color: rgba(255,255,255,0.4); }
+  .commitment-box textarea:focus { border-color: var(--gold); background: rgba(255,255,255,0.1); }
+
+  /* BUTTONS */
+  .btn { display: inline-flex; align-items: center; gap: 8px; padding: 12px 26px; border-radius: 6px; font-family: 'DM Sans', sans-serif; font-size: 15px; font-weight: 600; cursor: pointer; border: none; transition: all 0.2s; }
+  .btn-primary { background: var(--navy); color: white; }
+  .btn-primary:hover { background: #162546; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(15,27,53,0.25); }
+  .btn-gold { background: var(--gold); color: var(--navy); }
+  .btn-gold:hover { background: var(--gold-light); transform: translateY(-1px); }
+  .btn-outline { background: transparent; color: var(--navy); border: 2px solid var(--navy); }
+  .btn-outline:hover { background: var(--navy); color: white; }
+  .btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+  .btn-row { display: flex; gap: 12px; margin-top: 26px; flex-wrap: wrap; }
+
+  /* FINAL */
+  .final-screen { text-align: center; padding: 44px 28px; }
+  .trophy { font-size: 68px; margin-bottom: 14px; line-height: 1; }
+  .final-score-big { font-family: 'Playfair Display', serif; font-size: 54px; font-weight: 900; color: var(--navy); line-height: 1; margin-bottom: 4px; }
+  .final-score-big span { color: var(--gold); }
+  .final-label { font-size: 14px; color: var(--gray); margin-bottom: 22px; }
+  .final-verdict { display: inline-block; padding: 9px 26px; border-radius: 6px; font-size: 16px; font-weight: 700; margin-bottom: 26px; }
+  .summary-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 24px 0; text-align: left; }
+  .summary-card { background: var(--off-white); border-radius: 10px; padding: 16px; }
+  .summary-card .s-num { font-size: 26px; font-weight: 700; color: var(--navy); }
+  .summary-card .s-label { font-size: 12px; color: var(--gray); margin-top: 2px; }
+  .final-commitment { background: linear-gradient(135deg, var(--navy), var(--navy-mid)); border-radius: 10px; padding: 20px 24px; color: white; text-align: left; margin-top: 18px; }
+  .final-commitment h4 { font-family: 'Playfair Display', serif; margin-bottom: 10px; font-size: 17px; }
+  .final-commitment p { font-size: 14px; line-height: 1.65; color: rgba(255,255,255,0.85); font-style: italic; }
+
+  @media (max-width: 620px) {
+    .card-body, .card-header { padding: 20px 16px; }
+    .risk-levels { grid-template-columns: 1fr; }
+    .sanction-columns { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-deco"></div><div class="header-deco2"></div>
+  <div class="header-inner">
+    <h1>AI Ethics & Compliance<br><span>Studiu de Caz Interactiv</span></h1>
+    <p>Parcurge cele 6 module, aplică cunoștințele din curs și construiește-ți propriul plan de conformitate AI.</p>
+  </div>
+  <div class="progress-bar-wrap">
+    <div class="progress-steps" id="stepDots"></div>
+    <span class="progress-text" id="progressText">Modulul 1 din 6</span>
+    <span class="score-badge" id="scoreBadge">Scor: 0 pct.</span>
+  </div>
+</header>
+
+<main>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 1 — Etic sau Problematic?
+═══════════════════════════════════════════════════════ -->
+<div class="card visible" id="mod1">
+  <div class="card-header">
+    <div class="section-label">Modulul 1 · Fundamente Etice</div>
+    <h2>Etic sau Problematic?</h2>
+    <p>Evaluează fiecare scenariu în lumina principiilor etice AI și a EU AI Act. Alege răspunsul corect și citește justificarea.</p>
+  </div>
+  <div class="card-body">
+
+    <div class="question-block">
+      <div class="q-label">Scenariul A</div>
+      <div class="q-text">Un sistem AI HR respinge automat CV-uri fără nicio intervenție umană și fără a furniza o explicație candidaților respinși.</div>
+      <div class="options">
+        <div class="option" onclick="mcq(this,'q1a',false,'Incorect. AI poate reproduce sau amplifica biasuri din datele de antrenament. Mai important: absența intervenției umane și a explicației constituie încălcări legale clare — Art. 22 GDPR și EU AI Act risc înalt.')">
+          <div class="opt-radio"></div><div class="opt-text">✅ Etic — AI este mai obiectiv decât un recrutor uman</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" data-correct onclick="mcq(this,'q1a',true,'Corect! Art. 22 GDPR interzice deciziile 100% automate cu efecte semnificative. EU AI Act clasifică recrutarea AI drept risc înalt (Anexa III), impunând supervizare umană (Art. 14) și XAI. Soluție: revizuire umană obligatorie + explicație furnizată candidaților respinși.')">
+          <div class="opt-radio"></div><div class="opt-text">❌ Problematic — lipsesc intervenția umană și explicațiile</div><div class="opt-badge">✅</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q1a',false,'Parțial, dar insuficient. Recrutarea AI este categorie de risc înalt în EU AI Act indiferent de calitatea algoritmului. Absența XAI și a revizuirii umane sunt obligații legale, nu opțiuni discreționare.')">
+          <div class="opt-radio"></div><div class="opt-text">⚠️ Depinde — dacă algoritmul e bine antrenat, poate fi OK</div><div class="opt-badge">❌</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q1a"></div>
+    </div>
+
+    <div class="question-block">
+      <div class="q-label">Scenariul B</div>
+      <div class="q-text">Un spital folosește AI pentru triaj (prioritizarea pacienților). Medicii validează fiecare decizie AI înainte de aplicare, iar pacienții sunt informați despre utilizarea AI.</div>
+      <div class="options">
+        <div class="option" data-correct onclick="mcq(this,'q1b',true,'Corect! Scenariul respectă toate cerințele: supervizare umană (medicul validează), transparență față de pacienți și XAI implicat. Deși este sistem de risc înalt (sănătate), garanțiile obligatorii sunt îndeplinite — un model de bune practici.')">
+          <div class="opt-radio"></div><div class="opt-text">✅ Etic — intervenție umană, transparență, validare medicală</div><div class="opt-badge">✅</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q1b',false,'Incorect. EU AI Act nu interzice AI în medicină — îl reglementează strict. Scenariul include exact garanțiile care fac utilizarea conformă: validare umană și informarea pacienților.')">
+          <div class="opt-radio"></div><div class="opt-text">❌ Problematic — AI în medicină e întotdeauna periculos</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q1b',false,'Deși nuanța e valoroasă, contextul dat conține garanțiile legale necesare. Răspunsul cel mai precis este că scenariul respectă cerințele etice și legale aplicabile.')">
+          <div class="opt-radio"></div><div class="opt-text">⚠️ Depinde — trebuie evaluat caz cu caz</div><div class="opt-badge">❌</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q1b"></div>
+    </div>
+
+    <div class="question-block">
+      <div class="q-label">Scenariul C</div>
+      <div class="q-text">O companie de retail monitorizează în timp real mișcările mouse-ului și pauzele angajaților remote prin AI, fără a-i informa în prealabil și fără o bază legală documentată.</div>
+      <div class="options">
+        <div class="option" onclick="mcq(this,'q1c',false,'Incorect. Dreptul de a monitoriza productivitatea nu elimină obligația legală de informare prealabilă a angajaților. Monitorizarea fără informare este o încălcare directă a GDPR, indiferent de scopul urmărit.')">
+          <div class="opt-radio"></div><div class="opt-text">✅ Etic — angajatorul are dreptul să monitorizeze productivitatea</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" data-correct onclick="mcq(this,'q1c',true,'Corect! Absența informării prealabile și a bazei legale documentate constituie încălcare directă a GDPR Art. 5 (principiul transparenței) și Art. 13 (obligația de informare la colectarea datelor). Monitorizarea comportamentului angajaților prin AI poate fi și practică de risc înalt conform EU AI Act.')">
+          <div class="opt-radio"></div><div class="opt-text">❌ Problematic — lipsesc informarea și baza legală</div><div class="opt-badge">✅</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q1c',false,'Absența informării prealabile nu este o chestiune de interpretare — este o încălcare clară a GDPR Art. 13. Regimul remote nu modifică obligațiile de transparență față de angajați.')">
+          <div class="opt-radio"></div><div class="opt-text">⚠️ Depinde — angajații remote pot fi monitorizați mai strict</div><div class="opt-badge">❌</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q1c"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextMod(1)">Continuă → Modulul 2</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 2 — Clasifică Riscul
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="mod2">
+  <div class="card-header">
+    <div class="section-label">Modulul 2 · EU AI Act</div>
+    <h2>Clasifică Riscul!</h2>
+    <p>Selectează un sistem din lista de sus (se va evidenția cu auriu), apoi apasă nivelul de risc corect din piramidă. Apasă un element deja plasat pentru a-l returna.</p>
+  </div>
+  <div class="card-body">
+    <div class="risk-instruction">💡 <strong>Cum funcționează:</strong> Apasă un sistem → se selectează (contur auriu) → apasă nivelul de risc corespunzător pentru a-l plasa acolo.</div>
+    <div class="risk-chips-wrap" id="riskChips">
+      <div class="risk-chip" id="rc0" onclick="selChip(0)">🤖 Chatbot customer service retail</div>
+      <div class="risk-chip" id="rc1" onclick="selChip(1)">💳 Scoring credit bancar</div>
+      <div class="risk-chip" id="rc2" onclick="selChip(2)">📹 Recunoaștere facială live în spații publice</div>
+      <div class="risk-chip" id="rc3" onclick="selChip(3)">🎵 Recomandări muzică (Spotify)</div>
+      <div class="risk-chip" id="rc4" onclick="selChip(4)">📋 AI selecție CV-uri HR</div>
+      <div class="risk-chip" id="rc5" onclick="selChip(5)">😊 Detectare emoții angajați la locul de muncă</div>
+    </div>
+
+    <div class="risk-levels">
+      <div class="risk-level interzis" onclick="placeChip('interzis')">
+        <h4>🚫 Risc Inacceptabil — Interzis</h4>
+        <div class="placed-items" id="rl-interzis"><span class="rl-empty">Plasează sisteme aici</span></div>
+      </div>
+      <div class="risk-level inalt" onclick="placeChip('inalt')">
+        <h4>⚠️ Risc Înalt</h4>
+        <div class="placed-items" id="rl-inalt"><span class="rl-empty">Plasează sisteme aici</span></div>
+      </div>
+      <div class="risk-level limitat" onclick="placeChip('limitat')">
+        <h4>ℹ️ Risc Limitat — Transparență</h4>
+        <div class="placed-items" id="rl-limitat"><span class="rl-empty">Plasează sisteme aici</span></div>
+      </div>
+      <div class="risk-level minim" onclick="placeChip('minim')">
+        <h4>✅ Risc Minim</h4>
+        <div class="placed-items" id="rl-minim"><span class="rl-empty">Plasează sisteme aici</span></div>
+      </div>
+    </div>
+
+    <div class="feedback" id="riskFeedback" style="margin-top:16px;"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="checkRisk()">Verifică clasificarea</button>
+      <button class="btn btn-primary" onclick="nextMod(2)">Continuă → Modulul 3</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 3 — Asociază Sancțiunile
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="mod3">
+  <div class="card-header">
+    <div class="section-label">Modulul 3 · Sancțiuni</div>
+    <h2>Asociază Sancțiunea Corectă</h2>
+    <p>Selectează o încălcare din coloana stângă, apoi selectează sancțiunea corespunzătoare din coloana dreaptă. Găsește toate cele 4 perechi corecte.</p>
+  </div>
+  <div class="card-body">
+    <div class="sanction-score-line" id="sanctionScore">Perechi găsite: <strong>0 / 4</strong></div>
+    <div class="sanction-columns">
+      <div>
+        <div class="sanction-col-title">Tip de încălcare</div>
+        <div class="sanction-item" id="sl0" data-id="0" onclick="selLeft(0)">Sistem AI interzis operat<br><small style="color:var(--gray);font-weight:400">(Art. 5 EU AI Act)</small></div>
+        <div class="sanction-item" id="sl1" data-id="1" onclick="selLeft(1)">Sistem AI risc înalt neconform</div>
+        <div class="sanction-item" id="sl2" data-id="2" onclick="selLeft(2)">Breșă GDPR legată de AI</div>
+        <div class="sanction-item" id="sl3" data-id="3" onclick="selLeft(3)">Informații false furnizate autorităților AI</div>
+      </div>
+      <div>
+        <div class="sanction-col-title">Sancțiune maximă</div>
+        <div class="sanction-item" id="sr0" data-id="0" onclick="selRight(0)">€ 15M sau 3% din CA global</div>
+        <div class="sanction-item" id="sr1" data-id="1" onclick="selRight(1)">€ 35M sau 7% din CA global</div>
+        <div class="sanction-item" id="sr2" data-id="2" onclick="selRight(2)">€ 20M sau 4% din CA global</div>
+        <div class="sanction-item" id="sr3" data-id="3" onclick="selRight(3)">€ 7,5M sau 1,5% din CA global</div>
+      </div>
+    </div>
+    <!-- Cheia corectă: left[0]↔right[1], left[1]↔right[0], left[2]↔right[2], left[3]↔right[3] -->
+    <div class="feedback" id="sanctionFeedback" style="margin-top:0;"></div>
+    <div class="btn-row">
+      <button class="btn btn-outline" onclick="checkSanctions()">Verifică / Vezi răspunsurile</button>
+      <button class="btn btn-primary" onclick="nextMod(3)">Continuă → Modulul 4</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 4 — Studiu de Caz RetailCo
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="mod4">
+  <div class="card-header">
+    <div class="section-label">Modulul 4 · Studiu de Caz</div>
+    <h2>Cazul RetailCo — Analiză & Soluții</h2>
+    <p>Analizează cele trei sisteme AI implementate de RetailCo și identifică problemele legale și soluțiile corecte.</p>
+  </div>
+  <div class="card-body">
+
+    <div class="scenario-box">
+      <strong>Contextul organizației</strong>
+      <p>RetailCo este un lanț de retail cu 2.000 de angajați care a implementat trei sisteme AI fără politică internă sau evaluare de conformitate: <em>(1)</em> un AI de recrutare care respinge automat CV-uri, <em>(2)</em> un chatbot HR cu conversații stocate pe servere în SUA fără SCC, și <em>(3)</em> un sistem de monitorizare a productivității angajaților remote fără informare prealabilă.</p>
+      <span class="tag">Caz real adaptat · EU AI Act + GDPR</span>
+    </div>
+
+    <!-- Q4.1 -->
+    <div class="question-block">
+      <div class="q-label">Întrebarea 1 · AI de Recrutare</div>
+      <div class="q-text">Sistemul AI respinge automat CV-uri fără revizuire umană. Care este principala problemă legală?</div>
+      <div class="options">
+        <div class="option" onclick="mcq(this,'q4a',false,'Incorect. Criteriile și formatul nu sunt sursa problemei legale. Problema este că decizia automată de respingere produce un efect semnificativ (pierderea oportunității de angajare) fără nicio intervenție umană — ceea ce este interzis explicit.')">
+          <div class="opt-radio"></div><div class="opt-text">Criteriile de selecție sunt neclare și formatul CV-urilor nestandard</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" data-correct onclick="mcq(this,'q4a',true,'Corect! Respingerea automată fără revizuire umană încalcă Art. 22 GDPR (interzice decizii 100% automate cu efecte semnificative) și EU AI Act Art. 14 (recrutarea AI = risc înalt, supervizare umană obligatorie). Soluție: revizuire umană pentru toate respingerile + XAI activat — candidatul primește explicație scrisă.')">
+          <div class="opt-radio"></div><div class="opt-text">Încalcă Art. 22 GDPR (decizie 100% automată) și EU AI Act risc înalt fără supervizare umană</div><div class="opt-badge">✅</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q4a',false,'Lipsa unui buget dedicat nu este o problemă legală. Lipsa DPIA este o problemă reală, dar secundară față de absența intervenției umane și a dreptului la explicație — care sunt obligații imediate și prioritare.')">
+          <div class="opt-radio"></div><div class="opt-text">Nu există un buget dedicat pentru AI și lipsește DPIA</div><div class="opt-badge">❌</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q4a"></div>
+    </div>
+
+    <!-- Q4.2 -->
+    <div class="question-block">
+      <div class="q-label">Întrebarea 2 · Chatbot HR</div>
+      <div class="q-text">Conversațiile angajaților cu chatbotul HR sunt stocate pe servere în SUA, fără niciun mecanism de transfer documentat. Ce trebuie să facă RetailCo în primul rând?</div>
+      <div class="options">
+        <div class="option" data-correct onclick="mcq(this,'q4b',true,'Corect! GDPR Cap. V reglementează transferurile internaționale de date. Fără Standard Contractual Clauses (SCC) sau alt mecanism adecvat, transferul datelor angajaților în SUA este ilegal. SCC este soluția standard post-Privacy Shield. Alternativ: migrare pe infrastructură EU.')">
+          <div class="opt-radio"></div><div class="opt-text">Semnează Standard Contractual Clauses (SCC) cu furnizorul american sau migrează pe servere EU</div><div class="opt-badge">✅</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q4b',false,'Consimțământul individual al angajaților nu este mecanismul recomandat pentru transferuri internaționale în context corporate — este greu de obținut la scară și poate fi retras. SCC oferă o bază legală robustă și permanentă.')">
+          <div class="opt-radio"></div><div class="opt-text">Obține consimțământul individual al fiecărui angajat pentru stocarea în SUA</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q4b',false,'Criptarea este o bună practică de securitate, dar nu rezolvă problema legalității transferului internațional. Date criptate transferate fără SCC = transfer ilegal conform GDPR.')">
+          <div class="opt-radio"></div><div class="opt-text">Criptează toate conversațiile înainte de trimitere pe serverele din SUA</div><div class="opt-badge">❌</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q4b"></div>
+    </div>
+
+    <!-- Q4.3 -->
+    <div class="question-block">
+      <div class="q-label">Întrebarea 3 · Monitorizare Productivitate</div>
+      <div class="q-text">Angajații remote sunt monitorizați în timp real (mouse, pauze) fără informare prealabilă și fără bază legală documentată. Care este obligația GDPR primară încălcată?</div>
+      <div class="options">
+        <div class="option" onclick="mcq(this,'q4c',false,'DPIA este obligatorie (prelucrare la scară largă a datelor angajaților), dar nu este obligația primară încălcată în scenariul descris. Problema imediată și vizibilă este absența informării angajaților înainte de colectarea datelor.')">
+          <div class="opt-radio"></div><div class="opt-text">Obligația de a completa o DPIA înainte de lansarea sistemului</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q4c',false,'Dreptul de ștergere (Art. 17) este un drept al persoanei vizate și nu reprezintă obligația principală încălcată în acest scenariu. Problema este că datele sunt colectate fără ca angajații să știe — o încălcare anterioară și mai gravă.')">
+          <div class="opt-radio"></div><div class="opt-text">Dreptul angajaților la ștergerea datelor (Art. 17 GDPR)</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" data-correct onclick="mcq(this,'q4c',true,'Corect! Art. 13 GDPR impune informarea persoanelor vizate în momentul colectării datelor: scopul, temeiul legal, perioada de retenție, drepturile disponibile. Art. 5(1)(a) stabilește principiul transparenței ca fundament al GDPR. Ambele sunt încălcate. Soluție: notificare scrisă a angajaților + documentarea temeiuluii legal (interes legitim sau consimțământ) + limitarea datelor colectate la strictul necesar.')">
+          <div class="opt-radio"></div><div class="opt-text">Obligația de informare (Art. 13 GDPR) și principiul transparenței (Art. 5 GDPR)</div><div class="opt-badge">✅</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q4c"></div>
+    </div>
+
+    <!-- Q4.4 -->
+    <div class="question-block">
+      <div class="q-label">Întrebarea 4 · Evaluare globală RetailCo</div>
+      <div class="q-text">Dacă RetailCo nu remediază niciuna dintre cele trei probleme identificate, care este cel mai probabil scenariu de risc financiar combinat (EU AI Act + GDPR)?</div>
+      <div class="options">
+        <div class="option" onclick="mcq(this,'q4d',false,'Incorect. Amenzile EU AI Act și GDPR nu se exclud reciproc. O organizație poate fi sancționată simultan sub ambele regulamente dacă există încălcări separate — ceea ce este cazul RetailCo.')">
+          <div class="opt-radio"></div><div class="opt-text">Cel mult o singură amendă — autoritatea de supraveghere alege unul din regulamente</div><div class="opt-badge">❌</div>
+        </div>
+        <div class="option" data-correct onclick="mcq(this,'q4d',true,'Corect! RetailCo riscă sancțiuni cumulative: AI de recrutare fără supervizare umană = risc înalt neconform → până la €15M/3% CA (EU AI Act). Transferul ilegal în SUA + monitorizare fără informare → până la €20M/4% CA (GDPR). Sancțiunile EU AI Act și GDPR se cumulează, rezultând un risc financiar total semnificativ, fără a include costurile reputaționale și litigiile individuale.')">
+          <div class="opt-radio"></div><div class="opt-text">Sancțiuni cumulative EU AI Act + GDPR, potențial zeci de milioane EUR plus daune reputaționale</div><div class="opt-badge">✅</div>
+        </div>
+        <div class="option" onclick="mcq(this,'q4d',false,'Avertismentele sunt rare și rezervate pentru încălcări minore sau prima abatere. RetailCo are trei sisteme cu probleme documentate — o autoritate de supraveghere ar putea aplica sancțiuni directe, mai ales dacă există o plângere sau un incident concret.')">
+          <div class="opt-radio"></div><div class="opt-text">Doar un avertisment formal, fără amenzi — sancțiunile maxime sunt pentru cazuri extreme</div><div class="opt-badge">❌</div>
+        </div>
+      </div>
+      <div class="feedback" id="fb-q4d"></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextMod(4)">Continuă → Modulul 5</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 5 — Politică Internă AI
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="mod5">
+  <div class="card-header">
+    <div class="section-label">Modulul 5 · Politică Internă AI</div>
+    <h2>Construiește-ți Politica AI</h2>
+    <p>Completează secțiunile esențiale ale politicii interne AI pentru organizația ta. Textul introdus va apărea în raportul PDF final.</p>
+  </div>
+  <div class="card-body">
+
+    <div class="policy-section">
+      <div class="policy-section-head"><div class="policy-num">1</div><strong>Scopul și domeniul de aplicare</strong></div>
+      <div class="policy-section-body"><textarea id="pol1" placeholder="Ex: Această politică se aplică tuturor angajaților companiei [Denumire] și reglementează utilizarea oricărui sistem AI în activitatea profesională, inclusiv instrumente externe (ChatGPT, Gemini, Copilot etc.)..." oninput="countPolicy()"></textarea></div>
+    </div>
+    <div class="policy-section">
+      <div class="policy-section-head"><div class="policy-num">2</div><strong>Sisteme AI aprobate vs. interzise în organizația mea</strong></div>
+      <div class="policy-section-body"><textarea id="pol2" placeholder="Aprobate: [ex. Microsoft Copilot cu cont corporate, Claude Enterprise cu SCC semnat]. Interzise: conturi personale ChatGPT/Gemini cu date ale companiei, orice sistem AI neaudit de CISO..." oninput="countPolicy()"></textarea></div>
+    </div>
+    <div class="policy-section">
+      <div class="policy-section-head"><div class="policy-num">3</div><strong>Reguli pe categorii de date</strong></div>
+      <div class="policy-section-body"><textarea id="pol3" placeholder="Date publice: permis în orice sistem aprobat. Date interne: doar în sisteme cu SCC/hosting EU. Date confidențiale: INTERZIS în sisteme externe. Date personale: necesită temei legal GDPR + DPIA..." oninput="countPolicy()"></textarea></div>
+    </div>
+    <div class="policy-section">
+      <div class="policy-section-head"><div class="policy-num">4</div><strong>Responsabilități (cine face ce)</strong></div>
+      <div class="policy-section-body"><textarea id="pol4" placeholder="CISO: audit trimestrial inventar AI. DPO: DPIA pentru sisteme noi, conformitate GDPR. Manageri: informarea echipei, raportare incidente. Angajați: respectarea regulilor, raportarea utilizărilor suspecte..." oninput="countPolicy()"></textarea></div>
+    </div>
+    <div class="policy-section">
+      <div class="policy-section-head"><div class="policy-num">5</div><strong>Raportare incidente & Sancțiuni interne</strong></div>
+      <div class="policy-section-body"><textarea id="pol5" placeholder="Incidentele AI se raportează la [canal/email] în max. 24h de la descoperire. Sancțiuni pentru nerespectare: avertisment scris / suspendare acces AI / măsuri disciplinare conform CCM..." oninput="countPolicy()"></textarea></div>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextMod(5)">Continuă → Modulul 6</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 6 — Reguli & Angajament
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="mod6">
+  <div class="card-header">
+    <div class="section-label">Modulul 6 · Reguli & Angajament</div>
+    <h2>Cele 10 Reguli & Planul Tău de 30 Zile</h2>
+    <p>Bifează regulile pe care le aplici deja în organizația ta, apoi completează angajamentul personal.</p>
+  </div>
+  <div class="card-body">
+    <ul class="rule-list" id="ruleList">
+      <li><div class="rule-num">1</div><div>Nu introduc date personale, confidențiale sau secrete de afaceri în sisteme AI publice</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">2</div><div>Verific întotdeauna output-ul AI înainte de a-l publica sau folosi</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">3</div><div>Folosesc doar instrumentele AI aprobate de organizația mea</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">4</div><div>Declar utilizarea AI în documentele finale, acolo unde este relevant</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">5</div><div>Nu las AI să ia decizii finale cu impact juridic sau uman</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">6</div><div>Verific sursele — știu că AI poate halucina fapte, cifre și legi</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">7</div><div>Nu folosesc AI pentru a evalua sau discrimina persoane fără supraveghere umană</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">8</div><div>Raportez imediat orice incident sau comportament suspect al unui sistem AI</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">9</div><div>Sunt prudent cu dreptul de autor — conținutul generat de AI are statut juridic incert</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+      <li><div class="rule-num">10</div><div>Îmi actualizez cunoștințele — reglementările AI evoluează rapid</div><div class="rule-check" onclick="toggleRule(this)">⬜</div></li>
+    </ul>
+
+    <div class="commitment-box">
+      <h3>🎯 Angajamentul Meu — 30 de Zile</h3>
+      <p>În 30 de zile, voi face cel puțin un pas concret pentru utilizarea responsabilă a AI:</p>
+      <textarea id="commitment" placeholder="Ex: Voi mapa toate instrumentele AI utilizate în echipa mea și le voi prezenta DPO-ului pentru evaluare. Voi organiza o sesiune de 30 min cu colegii despre Shadow AI..." style="color:white;min-height:80px;"></textarea>
+    </div>
+
+    <div class="btn-row">
+      <button class="btn btn-gold" onclick="finishCourse()">✓ Finalizează &amp; generează raportul PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     ECRAN FINAL
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="modFinal">
+  <div class="final-screen">
+    <div class="trophy" id="finalTrophy">🏆</div>
+    <div class="final-score-big"><span id="finalScore">0</span><span>/100</span></div>
+    <div class="final-label">puncte obținute</div>
+    <div class="final-verdict" id="finalVerdict"></div>
+    <div class="summary-grid" id="summaryGrid"></div>
+    <div class="final-commitment" id="commitmentDisplay" style="display:none;">
+      <h4>📋 Angajamentul tău — 30 de zile</h4>
+      <p id="commitmentText"></p>
+    </div>
+    <div class="btn-row" style="justify-content:center;margin-top:28px;">
+      <button class="btn btn-gold" onclick="generatePDF()">⬇ Descarcă Raport PDF</button>
+      <button class="btn btn-outline" onclick="location.reload()">↺ Reîncepe</button>
+    </div>
+    <p style="margin-top:28px;color:var(--gray);font-size:13px;">
+      <strong>© 2025 Ruxandra Boghian</strong> — Conf. Univ. Dr. Habil. ASE București<br>
+    </p>
+  </div>
+</div>
+
+</main>
+
+<script>
+// ═══════════════ STATE ═══════════════
+const S = {
+  mod: 1, total: 6, score: 0,
+  answers: {},           // qId -> {correct, text}
+  riskPlacement: {},     // chipIdx -> levelId
+  selectedChip: null,
+  sanctionLeft: null,    // index selected in left column
+  sanctionMatched: {},   // leftId -> rightId (correct matches)
+  rulesChecked: 0,
+  policyFilled: 0,
+  commitment: '',
+  riskChecked: false,
+  sanctionChecked: false
+};
+
+// ═══════════════ PROGRESS ═══════════════
+function updateProgress() {
+  const dots = document.getElementById('stepDots');
+  dots.innerHTML = '';
+  for (let i = 1; i <= S.total; i++) {
+    const d = document.createElement('div');
+    d.className = 'step-dot' + (i === S.mod ? ' active' : i < S.mod ? ' done' : '');
+    if (i < S.mod) d.onclick = () => goMod(i);
+    dots.appendChild(d);
+  }
+  document.getElementById('progressText').textContent = `Modulul ${S.mod} din ${S.total}`;
+  document.getElementById('scoreBadge').textContent = `Scor: ${S.score} pct.`;
+}
+
+function goMod(n) {
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
+  const ids = ['mod1','mod2','mod3','mod4','mod5','mod6','modFinal'];
+  document.getElementById(ids[Math.min(n,6)-1 + (n>6?1:0)]).classList.add('visible');
+  if (n === 7) document.getElementById('modFinal').classList.add('visible');
+  else document.getElementById(ids[n-1]).classList.add('visible');
+  S.mod = n;
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function nextMod(from) { goMod(from + 1); }
+
+// ═══════════════ MCQ ═══════════════
+function mcq(el, qId, isCorrect, explanation) {
+  const parent = el.closest('.options');
+  if (parent.querySelector('.correct, .wrong')) return;
+  parent.querySelectorAll('.option').forEach(o => {
+    o.classList.add('disabled');
+    if (o === el) o.classList.add(isCorrect ? 'correct' : 'wrong');
+    if (!isCorrect && o.hasAttribute('data-correct')) o.classList.add('correct');
+  });
+  const fb = document.getElementById('fb-' + qId);
+  fb.className = 'feedback show ' + (isCorrect ? 'ok' : 'nok');
+  fb.innerHTML = '<strong>' + (isCorrect ? '✓ Corect!' : '✗ Incorect') + '</strong>' + explanation;
+  if (!S.answers[qId]) {
+    S.answers[qId] = { correct: isCorrect };
+    if (isCorrect) { S.score += 5; updateProgress(); }
+  }
+}
+
+// ═══════════════ RISK MODULE ═══════════════
+const RISK_CORRECT = { 0:'limitat', 1:'inalt', 2:'interzis', 3:'minim', 4:'inalt', 5:'interzis' };
+const RISK_NAMES = ['Chatbot customer service', 'Scoring credit bancar', 'Recunoaștere facială live', 'Recomandări muzică', 'AI selecție CV-uri HR', 'Detectare emoții angajați'];
+
+function selChip(idx) {
+  const chip = document.getElementById('rc' + idx);
+  if (chip.classList.contains('placed')) return;
+  S.selectedChip = idx;
+  document.querySelectorAll('.risk-chip').forEach((c, i) => {
+    if (!c.classList.contains('placed')) c.classList.toggle('selected-chip', i === idx);
+  });
+}
+
+function placeChip(level) {
+  if (S.selectedChip === null) return;
+  const idx = S.selectedChip;
+  const chip = document.getElementById('rc' + idx);
+  if (chip.classList.contains('placed')) return;
+  S.riskPlacement[idx] = level;
+  chip.classList.add('placed'); chip.classList.remove('selected-chip');
+  const container = document.getElementById('rl-' + level);
+  const empty = container.querySelector('.rl-empty');
+  if (empty) empty.remove();
+  const tag = document.createElement('span');
+  tag.className = 'placed-tag';
+  tag.textContent = '✕ ' + RISK_NAMES[idx];
+  tag.title = 'Apasă pentru a returna';
+  tag.onclick = () => {
+    chip.classList.remove('placed');
+    tag.remove();
+    delete S.riskPlacement[idx];
+    if (!container.querySelector('.placed-tag')) container.innerHTML = '<span class="rl-empty">Plasează sisteme aici</span>';
+  };
+  container.appendChild(tag);
+  S.selectedChip = null;
+}
+
+function checkRisk() {
+  const placed = Object.keys(S.riskPlacement).length;
+  const fb = document.getElementById('riskFeedback');
+  if (placed < 6) {
+    fb.className = 'feedback show nok';
+    fb.innerHTML = '<strong>Clasificare incompletă</strong>Plasează toate cele 6 sisteme înainte de verificare (' + placed + '/6 plasate).';
+    return;
+  }
+  let correct = 0;
+  const lines = Object.entries(RISK_CORRECT).map(([i, lvl]) => {
+    const got = S.riskPlacement[i] || '—';
+    const ok = got === lvl;
+    if (ok) correct++;
+    return (ok ? '✓' : '✗') + ' <strong>' + RISK_NAMES[i] + '</strong>: ' + (ok ? lvl : got + ' → corect: ' + lvl);
+  });
+  if (!S.riskChecked) {
+    S.riskChecked = true;
+    const pts = Math.round((correct / 6) * 15);
+    S.score += pts;
+    updateProgress();
+  }
+  fb.className = 'feedback show ' + (correct >= 4 ? 'ok' : 'nok');
+  fb.innerHTML = '<strong>' + correct + '/6 corecte</strong>' + lines.join('<br>') +
+    '<br><br><em>Referință: EU AI Act Art. 5 (interzise), Anexa I+III (risc înalt), Art. 50 (risc limitat — chatboți)</em>';
+}
+
+// ═══════════════ SANCTIONS MODULE ═══════════════
+// Mapping: left[0]=sistem interzis, left[1]=risc înalt, left[2]=GDPR breșă, left[3]=info false
+// right[0]=€15M3%, right[1]=€35M7%, right[2]=€20M4%, right[3]=€7.5M1.5%
+// Correct pairs: left[0]↔right[1], left[1]↔right[0], left[2]↔right[2], left[3]↔right[3]
+const SANCTION_CORRECT = { 0: 1, 1: 0, 2: 2, 3: 3 };
+const SANCTION_LABELS_LEFT  = ['Sistem AI interzis operat (Art. 5 EU AI Act)', 'Sistem AI risc înalt neconform', 'Breșă GDPR legată de AI', 'Informații false furnizate autorităților AI'];
+const SANCTION_LABELS_RIGHT = ['€15M sau 3% CA', '€35M sau 7% CA', '€20M sau 4% CA', '€7,5M sau 1,5% CA'];
+
+function selLeft(id) {
+  const el = document.getElementById('sl' + id);
+  if (el.classList.contains('matched-item') || el.classList.contains('disabled-item')) return;
+  S.sanctionLeft = id;
+  document.querySelectorAll('[id^="sl"]').forEach((e, i) => {
+    if (!e.classList.contains('matched-item')) e.classList.toggle('sel-left', i === id);
+  });
+}
+
+function selRight(id) {
+  const el = document.getElementById('sr' + id);
+  if (el.classList.contains('matched-item') || el.classList.contains('disabled-item')) return;
+  if (S.sanctionLeft === null) {
+    el.classList.add('sel-right');
+    setTimeout(() => el.classList.remove('sel-right'), 600);
+    return;
+  }
+  const leftId = S.sanctionLeft;
+  const isCorrect = SANCTION_CORRECT[leftId] === id;
+  const lEl = document.getElementById('sl' + leftId);
+  if (isCorrect) {
+    lEl.classList.remove('sel-left'); lEl.classList.add('matched-item');
+    el.classList.add('matched-item');
+    S.sanctionMatched[leftId] = id;
+    const count = Object.keys(S.sanctionMatched).length;
+    document.getElementById('sanctionScore').innerHTML = 'Perechi găsite: <strong>' + count + ' / 4</strong>';
+    if (count === 4) {
+      if (!S.sanctionChecked) {
+        S.sanctionChecked = true; S.score += 10; updateProgress();
+      }
+      document.getElementById('sanctionFeedback').className = 'feedback show ok';
+      document.getElementById('sanctionFeedback').innerHTML = '<strong>✓ Toate perechile corecte! +10 puncte</strong>Sistem interzis → €35M/7% | Risc înalt → €15M/3% | GDPR → €20M/4% | Info false → €7,5M/1,5%';
+    }
+  } else {
+    lEl.classList.add('wrong-flash');
+    el.classList.add('wrong-flash');
+    setTimeout(() => { lEl.classList.remove('wrong-flash'); el.classList.remove('wrong-flash'); }, 500);
+  }
+  document.querySelectorAll('[id^="sl"]').forEach(e => e.classList.remove('sel-left'));
+  document.querySelectorAll('[id^="sr"]').forEach(e => e.classList.remove('sel-right'));
+  S.sanctionLeft = null;
+}
+
+function checkSanctions() {
+  const count = Object.keys(S.sanctionMatched).length;
+  const fb = document.getElementById('sanctionFeedback');
+  fb.className = 'feedback show ' + (count === 4 ? 'ok' : 'nok');
+  const correct = { 0:'€35M sau 7% CA', 1:'€15M sau 3% CA', 2:'€20M sau 4% CA', 3:'€7,5M sau 1,5% CA' };
+  const lines = [0,1,2,3].map(i => {
+    const ok = S.sanctionMatched[i] === SANCTION_CORRECT[i];
+    return (ok ? '✓' : '?') + ' <strong>' + SANCTION_LABELS_LEFT[i] + '</strong> → ' + correct[i];
+  });
+  fb.innerHTML = '<strong>' + count + '/4 perechi corecte</strong>' + lines.join('<br>');
+  if (!S.sanctionChecked) { S.sanctionChecked = true; S.score += Math.round((count/4)*10); updateProgress(); }
+}
+
+// ═══════════════ RULES ═══════════════
+function toggleRule(el) {
+  const on = el.textContent === '✅';
+  el.textContent = on ? '⬜' : '✅';
+  S.rulesChecked += on ? -1 : 1;
+}
+
+// ═══════════════ POLICY ═══════════════
+function countPolicy() {
+  S.policyFilled = ['pol1','pol2','pol3','pol4','pol5'].filter(id => document.getElementById(id).value.trim().length > 15).length;
+}
+
+// ═══════════════ FINISH ═══════════════
+function finishCourse() {
+  S.commitment = document.getElementById('commitment').value.trim();
+  if (S.rulesChecked >= 8) S.score += 10;
+  else if (S.rulesChecked >= 5) S.score += 5;
+  if (S.policyFilled >= 4) S.score += 10;
+  else if (S.policyFilled >= 2) S.score += 5;
+  if (S.commitment.length > 20) S.score += 5;
+  S.score = Math.min(S.score, 100);
+
+  S.mod = 7;
+  document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
+  document.getElementById('modFinal').classList.add('visible');
+  updateProgress();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  document.getElementById('finalScore').textContent = S.score;
+  document.getElementById('finalTrophy').textContent = S.score >= 80 ? '🏆' : S.score >= 55 ? '🥈' : '📚';
+
+  let verdict, vcol;
+  if (S.score >= 80) { verdict = 'Expert AI Compliance'; vcol = '#1a7a4a'; }
+  else if (S.score >= 55) { verdict = 'Practician AI Responsabil'; vcol = '#d4880a'; }
+  else { verdict = 'Continuă să înveți!'; vcol = '#0f1b35'; }
+  const fv = document.getElementById('finalVerdict');
+  fv.textContent = verdict; fv.style.cssText = `background:${vcol}22;color:${vcol};border:2px solid ${vcol}`;
+
+  const mcqOk = Object.values(S.answers).filter(a => a.correct).length;
+  const mcqTotal = Object.keys(S.answers).length;
+  document.getElementById('summaryGrid').innerHTML = `
+    <div class="summary-card"><div class="s-num">${mcqOk}/${mcqTotal}</div><div class="s-label">Răspunsuri corecte MCQ</div></div>
+    <div class="summary-card"><div class="s-num">${S.rulesChecked}/10</div><div class="s-label">Reguli deja aplicate</div></div>
+    <div class="summary-card"><div class="s-num">${S.policyFilled}/5</div><div class="s-label">Secțiuni politică</div></div>
+    <div class="summary-card"><div class="s-num">${S.score}/100</div><div class="s-label">Scor total</div></div>`;
+
+  if (S.commitment.length > 5) {
+    document.getElementById('commitmentDisplay').style.display = 'block';
+    document.getElementById('commitmentText').textContent = '„' + S.commitment + '"';
+  }
+}
+
+// ═══════════════ PDF GENERATION ═══════════════
+function generatePDF() {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+  const W = 210, margin = 18, cw = W - margin * 2;
+  let y = 0;
+
+  function newPage() { doc.addPage(); y = 20; }
+
+  function checkY(need) { if (y + need > 270) newPage(); }
+
+  function setFont(style, size, color) {
+    doc.setFont('helvetica', style);
+    doc.setFontSize(size);
+    if (color) doc.setTextColor(...color);
+    else doc.setTextColor(30, 42, 58);
+  }
+
+  function writeText(text, x, yy, opts) {
+    const lines = doc.splitTextToSize(text, opts && opts.maxW ? opts.maxW : cw);
+    doc.text(lines, x, yy, opts);
+    return lines.length * (opts && opts.lineH ? opts.lineH : doc.getFontSize() * 0.4);
+  }
+
+  // ── COVER PAGE ──
+  doc.setFillColor(15, 27, 53);
+  doc.rect(0, 0, W, 297, 'F');
+  doc.setFillColor(232, 160, 32);
+  doc.rect(0, 240, W, 57, 'F');
+
+  setFont('bold', 11, [232, 160, 32]);
+  doc.text('EVOTRAINHUB · APTIX ACADEMY', margin, 50);
+  setFont('bold', 26, [255, 255, 255]);
+  const titleLines = doc.splitTextToSize('AI Ethics & Compliance', cw);
+  doc.text(titleLines, margin, 70);
+  setFont('bold', 18, [200, 218, 240]);
+  doc.text('Raport Individual de Formare', margin, 96);
+
+  setFont('normal', 12, [200, 218, 240]);
+  doc.text('Studiu de Caz Interactiv — Rezultate', margin, 114);
+
+  // Score circle
+  doc.setFillColor(232, 160, 32);
+  doc.circle(W - margin - 22, 80, 22, 'F');
+  setFont('bold', 22, [15, 27, 53]);
+  doc.text(String(S.score), W - margin - 22, 79, { align: 'center' });
+  setFont('normal', 9, [15, 27, 53]);
+  doc.text('/ 100', W - margin - 22, 87, { align: 'center' });
+  doc.text('puncte', W - margin - 22, 93, { align: 'center' });
+
+  const mcqOk = Object.values(S.answers).filter(a => a.correct).length;
+  const mcqTotal = Object.keys(S.answers).length;
+  const d = new Date();
+  setFont('normal', 10, [15, 27, 53]);
+  doc.text('Data: ' + d.toLocaleDateString('ro-RO'), margin, 260);
+  doc.text('Răspunsuri corecte: ' + mcqOk + '/' + mcqTotal, margin, 268);
+  doc.text('Reguli aplicate: ' + S.rulesChecked + '/10', margin + 80, 260);
+  doc.text('Secțiuni politică: ' + S.policyFilled + '/5', margin + 80, 268);
+
+  setFont('bold', 11, [15, 27, 53]);
+  let verdict = S.score >= 80 ? 'Expert AI Compliance' : S.score >= 55 ? 'Practician AI Responsabil' : 'Continuă să înveți!';
+  doc.text('Nivel obținut: ' + verdict, margin, 282);
+
+  // ── PAGE 2: Detaliu Răspunsuri ──
+  newPage();
+  setFont('bold', 16, [15, 27, 53]);
+  doc.text('Rezultate pe Module', margin, y); y += 10;
+  doc.setDrawColor(232, 160, 32); doc.setLineWidth(0.8);
+  doc.line(margin, y, W - margin, y); y += 8;
+
+  const moduleNames = {
+    q1a:'Modulul 1 · Scenariu A — HR fără intervenție umană',
+    q1b:'Modulul 1 · Scenariu B — AI în triaj medical',
+    q1c:'Modulul 1 · Scenariu C — Monitorizare fără informare',
+    q4a:'Modulul 4 · RetailCo — AI Recrutare',
+    q4b:'Modulul 4 · RetailCo — Chatbot HR & SUA',
+    q4c:'Modulul 4 · RetailCo — Monitorizare Productivitate',
+    q4d:'Modulul 4 · RetailCo — Risc financiar combinat'
+  };
+
+  for (const [qId, ans] of Object.entries(S.answers)) {
+    checkY(18);
+    const label = moduleNames[qId] || qId;
+    const ok = ans.correct;
+    doc.setFillColor(ok ? 212 : 248, ok ? 240 : 215, ok ? 227 : 213);
+    doc.roundedRect(margin, y - 5, cw, 13, 2, 2, 'F');
+    setFont('bold', 10, ok ? [26, 122, 74] : [192, 57, 43]);
+    doc.text((ok ? '✓  ' : '✗  ') + label, margin + 4, y + 3);
+    setFont('normal', 10, [60, 60, 60]);
+    doc.text(ok ? 'Răspuns corect' : 'Răspuns incorect', W - margin - 4, y + 3, { align: 'right' });
+    y += 17;
+  }
+
+  // Risk classification
+  y += 4; checkY(12);
+  setFont('bold', 12, [15, 27, 53]); doc.text('Modulul 2 · Clasificare Risc EU AI Act', margin, y); y += 7;
+  const riskLevelsNamed = { interzis:'Risc Inacceptabil — Interzis', inalt:'Risc Înalt', limitat:'Risc Limitat', minim:'Risc Minim' };
+  for (let i = 0; i < 6; i++) {
+    checkY(8);
+    const got = S.riskPlacement[i];
+    const correct = RISK_CORRECT[i];
+    const ok = got === correct;
+    setFont('normal', 10, ok ? [26, 122, 74] : [150, 50, 50]);
+    doc.text((ok ? '✓ ' : '✗ ') + RISK_NAMES[i] + ': ' + (got ? riskLevelsNamed[got] : 'neplasat') + (ok ? '' : ' (corect: ' + riskLevelsNamed[correct] + ')'), margin + 2, y);
+    y += 7;
+  }
+
+  // Sanctions
+  y += 4; checkY(12);
+  setFont('bold', 12, [15, 27, 53]); doc.text('Modulul 3 · Asociere Sancțiuni', margin, y); y += 7;
+  const sanctionLeftLabels = ['Sistem AI interzis','Risc înalt neconform','Breșă GDPR','Info false autorități'];
+  const sanctionRightLabels = ['€15M/3% CA','€35M/7% CA','€20M/4% CA','€7,5M/1,5% CA'];
+  [0,1,2,3].forEach(i => {
+    checkY(8);
+    const ok = S.sanctionMatched[i] === SANCTION_CORRECT[i];
+    setFont('normal', 10, ok ? [26, 122, 74] : [150, 50, 50]);
+    const correctRight = sanctionRightLabels[SANCTION_CORRECT[i]];
+    doc.text((ok ? '✓ ' : '✗ ') + sanctionLeftLabels[i] + ' → ' + correctRight, margin + 2, y);
+    y += 7;
+  });
+
+  // ── PAGE 3: Politica Internă ──
+  newPage();
+  setFont('bold', 16, [15, 27, 53]); doc.text('Modulul 5 · Politica Internă AI — Schița Ta', margin, y); y += 8;
+  doc.setDrawColor(232, 160, 32); doc.line(margin, y, W - margin, y); y += 8;
+
+  const polIds = ['pol1','pol2','pol3','pol4','pol5'];
+  const polTitles = ['§1 Scop și domeniu de aplicare','§2 Sisteme aprobate vs. interzise','§3 Reguli pe categorii de date','§4 Responsabilități','§5 Raportare incidente & Sancțiuni'];
+  polIds.forEach((id, i) => {
+    const val = document.getElementById(id).value.trim();
+    checkY(20);
+    setFont('bold', 11, [15, 27, 53]); doc.text(polTitles[i], margin, y); y += 6;
+    setFont('normal', 10, [60, 70, 85]);
+    const text = val || '(necompleta)';
+    const lines = doc.splitTextToSize(text, cw);
+    lines.forEach(line => { checkY(7); doc.text(line, margin, y); y += 6; });
+    y += 4;
+  });
+
+  // ── PAGE 4: Reguli & Angajament ──
+  newPage();
+  setFont('bold', 16, [15, 27, 53]); doc.text('Modulul 6 · Cele 10 Reguli & Angajament', margin, y); y += 8;
+  doc.setDrawColor(232, 160, 32); doc.line(margin, y, W - margin, y); y += 8;
+
+  const rules = [
+    'Nu introduc date personale/confidențiale în AI publice',
+    'Verific output-ul AI înainte de publicare',
+    'Folosesc doar instrumentele AI aprobate',
+    'Declar utilizarea AI în documentele finale',
+    'Nu las AI să ia decizii finale cu impact juridic/uman',
+    'Verific sursele — AI poate halucina',
+    'Nu evaluez persoane prin AI fără supraveghere umană',
+    'Raportez imediat orice incident AI',
+    'Sunt prudent cu dreptul de autor pentru conținut AI',
+    'Îmi actualizez cunoștințele despre reglementările AI'
+  ];
+  const checks = document.querySelectorAll('.rule-check');
+  setFont('bold', 11, [15, 27, 53]);
+  doc.text('Reguli bifate ca aplicate deja (' + S.rulesChecked + '/10):', margin, y); y += 7;
+  rules.forEach((r, i) => {
+    checkY(8);
+    const checked = checks[i] && checks[i].textContent === '✅';
+    setFont('normal', 10, checked ? [26, 122, 74] : [150, 150, 150]);
+    doc.text((checked ? '✅ ' : '⬜ ') + r, margin + 2, y); y += 7;
+  });
+
+  y += 6; checkY(30);
+  doc.setFillColor(15, 27, 53);
+  doc.roundedRect(margin, y, cw, 35, 3, 3, 'F');
+  setFont('bold', 12, [232, 160, 32]);
+  doc.text('🎯 Angajamentul meu — 30 de zile', margin + 6, y + 10);
+  setFont('normal', 10, [200, 218, 240]);
+  const commitLines = doc.splitTextToSize(S.commitment || '(necompletat)', cw - 12);
+  let cy = y + 18;
+  commitLines.slice(0, 2).forEach(l => { doc.text(l, margin + 6, cy); cy += 7; });
+
+  // ── NUMĂR PAGINĂ pe toate paginile ──
+  const totalPages = doc.getNumberOfPages();
+  for (let p = 1; p <= totalPages; p++) {
+    doc.setPage(p);
+    setFont('normal', 8, [180, 180, 180]);
+    doc.text('Pagina ' + p + ' / ' + totalPages, W - margin, 291, { align: 'right' });
+  }
+
+  const fname = 'AI_Ethics_Compliance_Raport_' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '.pdf';
+  doc.save(fname);
+}
+
+// ═══════════════ INIT ══════════════
+updateProgress();
+</script>
+</body>
+</html>
