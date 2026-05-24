@@ -180,7 +180,34 @@
     .card-body, .card-header { padding: 20px 16px; }
     .risk-levels { grid-template-columns: 1fr; }
     .sanction-columns { grid-template-columns: 1fr; }
+    .inv-row { grid-template-columns: 1fr; }
   }
+  /* INVENTAR MODULE */
+  .inv-system { border: 2px solid #e0e8f4; border-radius: 12px; margin-bottom: 18px; overflow: hidden; transition: border-color 0.2s; }
+  .inv-system:focus-within { border-color: var(--navy); }
+  .inv-system-head { background: linear-gradient(135deg, #f0f5fc, #e8f0fa); padding: 14px 20px; display: flex; align-items: center; gap: 12px; }
+  .inv-num { width: 30px; height: 30px; background: var(--navy); color: white; border-radius: 50%; font-size: 14px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+  .inv-system-head span { font-size: 14px; font-weight: 600; color: var(--navy); }
+  .inv-tag { margin-left: auto; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; padding: 3px 10px; border-radius: 3px; background: #dde8f5; color: var(--gray); transition: all 0.3s; }
+  .inv-tag.filled { background: var(--gold); color: var(--navy); }
+  .inv-tag.risc-inalt { background: #fde8c3; color: #7a3a00; }
+  .inv-tag.risc-interzis { background: #fcd3cf; color: #7a1212; }
+  .inv-tag.risc-limitat { background: #d6e9ff; color: #0a3a6e; }
+  .inv-tag.risc-minim { background: #c8f0da; color: #0a4a25; }
+  .inv-tag.risc-incert { background: #f0e8ff; color: #4a1a7a; }
+  .inv-system-body { padding: 18px 20px; background: white; }
+  .inv-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .inv-row:last-child { margin-bottom: 0; }
+  .inv-field { display: flex; flex-direction: column; gap: 5px; }
+  .inv-field.inv-wide { grid-column: span 1; }
+  .inv-field label { font-size: 12px; font-weight: 600; color: var(--gray); text-transform: uppercase; letter-spacing: 0.8px; }
+  .inv-field input[type="text"], .inv-field select { padding: 10px 13px; border: 2px solid #e0e8f4; border-radius: 7px; font-family: 'DM Sans', sans-serif; font-size: 13.5px; color: var(--text); background: #fbfcff; transition: border-color 0.2s; }
+  .inv-field input[type="text"]:focus, .inv-field select:focus { outline: none; border-color: var(--navy); background: white; }
+  .inv-field input::placeholder { color: #b0bccc; }
+  .inv-field select { cursor: pointer; }
+  .inv-hint { background: #fffbe8; border: 1px solid #f5c960; border-radius: 8px; padding: 12px 16px; font-size: 13px; color: #7a5000; margin-top: 4px; margin-bottom: 4px; }
+  @media (max-width: 620px) { .inv-row { grid-template-columns: 1fr; } }
+
 </style>
 </head>
 <body>
@@ -514,6 +541,193 @@
     </div>
 
     <div class="btn-row">
+      <button class="btn btn-primary" onclick="nextMod(6)">Continuă → Modulul 7</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════
+     MODULUL 7 — Inventar AI Organizațional
+═══════════════════════════════════════════════════════ -->
+<div class="card" id="mod7">
+  <div class="card-header">
+    <div class="section-label">Modulul 7 · Inventar AI Organizațional</div>
+    <h2>Mapează sistemele AI din organizația ta</h2>
+    <p>Completează o fișă pentru fiecare sistem AI pe care îl folosești deja — aprobat oficial, shadow AI sau în fază de test. Primul pas în orice program de conformitate.</p>
+  </div>
+  <div class="card-body">
+
+    <div class="scenario-box">
+      <strong>De ce este esențial un inventar AI?</strong>
+      <p>Nu poți gestiona conformitatea unui sistem pe care nu-l cunoști. EU AI Act impune organizațiilor să știe exact ce sisteme AI operează, cum le clasifică și cine răspunde pentru ele. Inventarul este documentul de bază al oricărui audit.</p>
+    </div>
+
+    <div id="inventarSystems">
+      <!-- Sistem 1 -->
+      <div class="inv-system" id="invCard0">
+        <div class="inv-system-head">
+          <div class="inv-num">1</div>
+          <span>Sistemul AI #1</span>
+          <span class="inv-tag" id="inv_tag_0">necompletat</span>
+        </div>
+        <div class="inv-system-body">
+          <div class="inv-row">
+            <div class="inv-field">
+              <label>Denumire sistem / instrument</label>
+              <input type="text" id="inv_nume_0" placeholder="Ex: ChatGPT Plus, Microsoft Copilot, sistem intern de scoring..." oninput="updateInvTag(0)">
+            </div>
+            <div class="inv-field">
+              <label>Scopul utilizării</label>
+              <input type="text" id="inv_scop_0" placeholder="Ex: redactare emailuri, analiza contractelor, selectie CV...">
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-field">
+              <label>Clasificare risc EU AI Act</label>
+              <select id="inv_risc_0" onchange="updateRiscBadge(0)">
+                <option value="">-- Selectează --</option>
+                <option value="interzis">🚫 Risc Inacceptabil — Interzis</option>
+                <option value="inalt">⚠️ Risc Înalt</option>
+                <option value="limitat">ℹ️ Risc Limitat — Transparență</option>
+                <option value="minim">✅ Risc Minim</option>
+                <option value="incert">❓ Incert — necesită evaluare</option>
+              </select>
+            </div>
+            <div class="inv-field">
+              <label>DPIA necesară?</label>
+              <select id="inv_dpia_0">
+                <option value="">-- Selectează --</option>
+                <option value="da">Da — procesează date personale la scară</option>
+                <option value="nu">Nu — nu procesează date personale</option>
+                <option value="incert">Incert — necesită verificare cu DPO</option>
+              </select>
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-field inv-wide">
+              <label>Obligații identificate (EU AI Act / GDPR)</label>
+              <input type="text" id="inv_oblig_0" placeholder="Ex: supervizare umană obligatorie, SCC semnat, informare angajați, DPIA completă...">
+            </div>
+            <div class="inv-field">
+              <label>Responsabil intern</label>
+              <input type="text" id="inv_resp_0" placeholder="Ex: CISO, DPO, Manager IT...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sistem 2 -->
+      <div class="inv-system" id="invCard1">
+        <div class="inv-system-head">
+          <div class="inv-num">2</div>
+          <span>Sistemul AI #2</span>
+          <span class="inv-tag" id="inv_tag_1">necompletat</span>
+        </div>
+        <div class="inv-system-body">
+          <div class="inv-row">
+            <div class="inv-field">
+              <label>Denumire sistem / instrument</label>
+              <input type="text" id="inv_nume_1" placeholder="Ex: sistem HR, chatbot customer service, tool de analiză..." oninput="updateInvTag(1)">
+            </div>
+            <div class="inv-field">
+              <label>Scopul utilizării</label>
+              <input type="text" id="inv_scop_1" placeholder="Ex: recrutare, suport clienți, detectare fraudă...">
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-field">
+              <label>Clasificare risc EU AI Act</label>
+              <select id="inv_risc_1" onchange="updateRiscBadge(1)">
+                <option value="">-- Selectează --</option>
+                <option value="interzis">🚫 Risc Inacceptabil — Interzis</option>
+                <option value="inalt">⚠️ Risc Înalt</option>
+                <option value="limitat">ℹ️ Risc Limitat — Transparență</option>
+                <option value="minim">✅ Risc Minim</option>
+                <option value="incert">❓ Incert — necesită evaluare</option>
+              </select>
+            </div>
+            <div class="inv-field">
+              <label>DPIA necesară?</label>
+              <select id="inv_dpia_1">
+                <option value="">-- Selectează --</option>
+                <option value="da">Da — procesează date personale la scară</option>
+                <option value="nu">Nu — nu procesează date personale</option>
+                <option value="incert">Incert — necesită verificare cu DPO</option>
+              </select>
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-field inv-wide">
+              <label>Obligații identificate (EU AI Act / GDPR)</label>
+              <input type="text" id="inv_oblig_1" placeholder="Ex: supervizare umană obligatorie, SCC semnat, informare angajați, DPIA completă...">
+            </div>
+            <div class="inv-field">
+              <label>Responsabil intern</label>
+              <input type="text" id="inv_resp_1" placeholder="Ex: CISO, DPO, Manager IT...">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sistem 3 -->
+      <div class="inv-system" id="invCard2">
+        <div class="inv-system-head">
+          <div class="inv-num">3</div>
+          <span>Sistemul AI #3</span>
+          <span class="inv-tag" id="inv_tag_2">necompletat</span>
+        </div>
+        <div class="inv-system-body">
+          <div class="inv-row">
+            <div class="inv-field">
+              <label>Denumire sistem / instrument</label>
+              <input type="text" id="inv_nume_2" placeholder="Ex: tool de monitorizare, sistem de recomandare, AI pentru raportare..." oninput="updateInvTag(2)">
+            </div>
+            <div class="inv-field">
+              <label>Scopul utilizării</label>
+              <input type="text" id="inv_scop_2" placeholder="Ex: monitorizare productivitate, recomandări produse, generare rapoarte...">
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-field">
+              <label>Clasificare risc EU AI Act</label>
+              <select id="inv_risc_2" onchange="updateRiscBadge(2)">
+                <option value="">-- Selectează --</option>
+                <option value="interzis">🚫 Risc Inacceptabil — Interzis</option>
+                <option value="inalt">⚠️ Risc Înalt</option>
+                <option value="limitat">ℹ️ Risc Limitat — Transparență</option>
+                <option value="minim">✅ Risc Minim</option>
+                <option value="incert">❓ Incert — necesită evaluare</option>
+              </select>
+            </div>
+            <div class="inv-field">
+              <label>DPIA necesară?</label>
+              <select id="inv_dpia_2">
+                <option value="">-- Selectează --</option>
+                <option value="da">Da — procesează date personale la scară</option>
+                <option value="nu">Nu — nu procesează date personale</option>
+                <option value="incert">Incert — necesită verificare cu DPO</option>
+              </select>
+            </div>
+          </div>
+          <div class="inv-row">
+            <div class="inv-field inv-wide">
+              <label>Obligații identificate (EU AI Act / GDPR)</label>
+              <input type="text" id="inv_oblig_2" placeholder="Ex: supervizare umană obligatorie, SCC semnat, informare angajați, DPIA completă...">
+            </div>
+            <div class="inv-field">
+              <label>Responsabil intern</label>
+              <input type="text" id="inv_resp_2" placeholder="Ex: CISO, DPO, Manager IT...">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="inv-hint">
+      <strong>Nu ai 3 sisteme AI?</strong> Completează câte ai. Dacă nu ești sigur că un instrument e AI — completează oricum și marchează riscul ca „Incert". Inventarul nu trebuie să fie perfect, trebuie să fie real.
+    </div>
+
+    <div class="btn-row">
       <button class="btn btn-gold" onclick="finishCourse()">✓ Finalizează &amp; generează raportul PDF</button>
     </div>
   </div>
@@ -548,7 +762,8 @@
 <script>
 // ═══════════════ STATE ═══════════════
 const S = {
-  mod: 1, total: 6, score: 0,
+  mod: 1, total: 7, score: 0,
+  inventar: [{},{},{}],
   answers: {},           // qId -> {correct, text}
   riskPlacement: {},     // chipIdx -> levelId
   selectedChip: null,
@@ -571,15 +786,14 @@ function updateProgress() {
     if (i < S.mod) d.onclick = () => goMod(i);
     dots.appendChild(d);
   }
-  document.getElementById('progressText').textContent = `Modulul ${S.mod} din ${S.total}`;
+  document.getElementById('progressText').textContent = S.mod > S.total ? 'Finalizat!' : `Modulul ${S.mod} din ${S.total}`;
   document.getElementById('scoreBadge').textContent = `Scor: ${S.score} pct.`;
 }
 
 function goMod(n) {
   document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
-  const ids = ['mod1','mod2','mod3','mod4','mod5','mod6','modFinal'];
-  document.getElementById(ids[Math.min(n,6)-1 + (n>6?1:0)]).classList.add('visible');
-  if (n === 7) document.getElementById('modFinal').classList.add('visible');
+  const ids = ['mod1','mod2','mod3','mod4','mod5','mod6','mod7','modFinal'];
+  if (n === 8) document.getElementById('modFinal').classList.add('visible');
   else document.getElementById(ids[n-1]).classList.add('visible');
   S.mod = n;
   updateProgress();
@@ -748,6 +962,17 @@ function countPolicy() {
 // ═══════════════ FINISH ═══════════════
 function finishCourse() {
   S.commitment = document.getElementById('commitment').value.trim();
+  // collect inventar
+  for (let i = 0; i < 3; i++) {
+    S.inventar[i] = {
+      nume: (document.getElementById('inv_nume_'+i)||{value:''}).value.trim(),
+      scop: (document.getElementById('inv_scop_'+i)||{value:''}).value.trim(),
+      risc: (document.getElementById('inv_risc_'+i)||{value:''}).value,
+      obligatii: (document.getElementById('inv_oblig_'+i)||{value:''}).value.trim(),
+      responsabil: (document.getElementById('inv_resp_'+i)||{value:''}).value.trim(),
+      dpia: (document.getElementById('inv_dpia_'+i)||{value:''}).value,
+    };
+  }
   if (S.rulesChecked >= 8) S.score += 10;
   else if (S.rulesChecked >= 5) S.score += 5;
   if (S.policyFilled >= 4) S.score += 10;
@@ -755,7 +980,7 @@ function finishCourse() {
   if (S.commitment.length > 20) S.score += 5;
   S.score = Math.min(S.score, 100);
 
-  S.mod = 7;
+  S.mod = 8;
   document.querySelectorAll('.card').forEach(c => c.classList.remove('visible'));
   document.getElementById('modFinal').classList.add('visible');
   updateProgress();
@@ -782,6 +1007,31 @@ function finishCourse() {
   if (S.commitment.length > 5) {
     document.getElementById('commitmentDisplay').style.display = 'block';
     document.getElementById('commitmentText').textContent = '„' + S.commitment + '"';
+  }
+}
+
+// ═══════════════ INVENTAR MODULE ═══════════════
+function updateInvTag(i) {
+  const val = (document.getElementById('inv_nume_'+i)||{value:''}).value.trim();
+  const tag = document.getElementById('inv_tag_'+i);
+  if (!tag) return;
+  if (val.length > 2) { tag.textContent = val.length > 18 ? val.substring(0,18)+'…' : val; tag.className = 'inv-tag filled'; }
+  else { tag.textContent = 'necompletat'; tag.className = 'inv-tag'; }
+}
+
+function updateRiscBadge(i) {
+  const val = document.getElementById('inv_risc_'+i).value;
+  const tag = document.getElementById('inv_tag_'+i);
+  const name = (document.getElementById('inv_nume_'+i)||{value:''}).value.trim();
+  if (!tag) return;
+  const classMap = { inalt:'risc-inalt', interzis:'risc-interzis', limitat:'risc-limitat', minim:'risc-minim', incert:'risc-incert' };
+  if (val) {
+    const labels = { inalt:'Risc Înalt', interzis:'INTERZIS', limitat:'Risc Limitat', minim:'Risc Minim', incert:'De evaluat' };
+    tag.textContent = labels[val];
+    tag.className = 'inv-tag ' + (classMap[val] || 'filled');
+  } else if (name.length > 2) {
+    tag.textContent = name.length > 18 ? name.substring(0,18)+'…' : name;
+    tag.className = 'inv-tag filled';
   }
 }
 
@@ -1072,6 +1322,74 @@ function generatePDF() {
     let cy = y + 19;
     commitLines.slice(0,3).forEach(l => { doc.text(l, M + 5, cy); cy += 6; });
   }
+
+
+  // ════════════════════════════════
+  // PAGINA INVENTAR AI
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 7 - Inventarul AI al organizatiei tale');
+  bodyText('Mai jos sunt prezentate sistemele AI completate in cadrul exercitiului de inventariere. Acest document poate constitui punctul de plecare pentru un inventar AI formal, conform cerintelor EU AI Act.');
+  y += 4;
+
+  const riscLabels = { inalt:'Risc Inalt', interzis:'RISC INACCEPTABIL - INTERZIS', limitat:'Risc Limitat', minim:'Risc Minim', incert:'Incert - necesita evaluare', '':'Neclasificat' };
+  const dpiaLabels = { da:'Da - necesara', nu:'Nu - nu proceseaza date personale', incert:'Incert - verificare cu DPO', '':'Necompletat' };
+  const riscColors = { inalt:[192,57,43], interzis:[139,0,0], limitat:[41,128,185], minim:[26,122,74], incert:[100,60,160], '': [120,120,120] };
+
+  S.inventar.forEach((inv, idx) => {
+    if (!inv.nume) return;
+    chk(55);
+    // system header bar
+    const rc = riscColors[inv.risc] || [120,120,120];
+    doc.setFillColor(rc[0], rc[1], rc[2]);
+    doc.roundedRect(M, y, cw, 10, 2, 2, 'F');
+    font('bold', 11, 255, 255, 255);
+    doc.text(ro('Sistem ' + (idx+1) + ': ' + inv.nume), M+4, y+7);
+    y += 13;
+
+    const rows = [
+      ['Scop', inv.scop || 'necompletat'],
+      ['Clasificare risc EU AI Act', riscLabels[inv.risc] || 'Neclasificat'],
+      ['DPIA necesara', dpiaLabels[inv.dpia] || 'Necompletat'],
+      ['Obligatii identificate', inv.obligatii || 'necompletat'],
+      ['Responsabil intern', inv.responsabil || 'necompletat'],
+    ];
+    rows.forEach(([label, val]) => {
+      chk(12);
+      font('bold', 9, 80, 95, 120);
+      doc.text(ro(label + ':'), M+2, y);
+      font('normal', 9.5, 40, 50, 65);
+      const vlines = doc.splitTextToSize(ro(val), cw - 45);
+      doc.text(vlines[0], M + 42, y);
+      y += 6;
+      if (vlines.length > 1) {
+        vlines.slice(1).forEach(l => { chk(6); doc.text(l, M+42, y); y+=5.5; });
+      }
+    });
+    y += 6;
+    doc.setDrawColor(220,228,240); doc.setLineWidth(0.2);
+    doc.line(M, y, W-M, y); y += 7;
+  });
+
+  const filled = S.inventar.filter(inv => inv.nume).length;
+  if (filled === 0) {
+    font('italic', 10, 150, 150, 150);
+    doc.text('(niciun sistem completat)', M, y); y += 8;
+  }
+
+  y += 4;
+  chk(20);
+  font('bold', 10, 15, 27, 53);
+  doc.text(ro('Pasii urmatori recomandati:'), M, y); y += 6;
+  font('normal', 9.5, 60, 70, 85);
+  const nextSteps = [
+    '1. Prezinta acest inventar DPO-ului si CISO-ului pentru validare si completare.',
+    '2. Pentru sistemele de risc inalt — initiaza imediat procedura de DPIA si supervizare umana.',
+    '3. Pentru sistemele cu risc incert — solicita o evaluare tehnico-juridica in max. 30 de zile.',
+    '4. Actualizeaza inventarul semestrial sau la orice implementare noua.',
+    '5. Inregistreaza sistemele de risc inalt in registrul UE (din aug. 2026).',
+  ];
+  nextSteps.forEach(s => { chk(7); block(s, 2, 5.5); });
 
   // ════════════════════════════════
   // NUMERE PAGINI
