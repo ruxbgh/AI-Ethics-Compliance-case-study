@@ -786,187 +786,301 @@ function finishCourse() {
 }
 
 // ═══════════════ PDF GENERATION ═══════════════
+// jsPDF built-in font (helvetica) supports only latin1 — diacritics must be transliterated
+function ro(s) {
+  return s
+    .replace(/[ăÅ]/g,'a').replace(/[âÂ]/g,'a').replace(/[îÎ]/g,'i')
+    .replace(/[șŞ]/g,'s').replace(/[țŢ]/g,'t')
+    .replace(/[ăaă]/g,'a').replace(/Ă/g,'A')
+    .replace(/î/g,'i').replace(/Î/g,'I')
+    .replace(/ş|Ş|ș|Ș/g,'s')
+    .replace(/ţ|Ţ|ț|Ț/g,'t')
+    .replace(/[–—]/g,'-').replace(/[""„]/g,'"').replace(/['']/g,"'");
+}
+
 function generatePDF() {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
-  const W = 210, margin = 18, cw = W - margin * 2;
+  const W = 210, M = 18, cw = W - M * 2;
   let y = 0;
 
-  function newPage() { doc.addPage(); y = 20; }
+  function addPage() { doc.addPage(); y = 22; }
+  function chk(n) { if (y + n > 275) addPage(); }
 
-  function checkY(need) { if (y + need > 270) newPage(); }
-
-  function setFont(style, size, color) {
+  function font(style, size, r, g, b) {
     doc.setFont('helvetica', style);
     doc.setFontSize(size);
-    if (color) doc.setTextColor(...color);
-    else doc.setTextColor(30, 42, 58);
+    doc.setTextColor(r !== undefined ? r : 30, g !== undefined ? g : 42, b !== undefined ? b : 58);
   }
 
-  function writeText(text, x, yy, opts) {
-    const lines = doc.splitTextToSize(text, opts && opts.maxW ? opts.maxW : cw);
-    doc.text(lines, x, yy, opts);
-    return lines.length * (opts && opts.lineH ? opts.lineH : doc.getFontSize() * 0.4);
+  function block(text, indent, lineH, maxW) {
+    const lines = doc.splitTextToSize(ro(text), maxW || (cw - indent));
+    lines.forEach(l => { chk(lineH); doc.text(l, M + indent, y); y += lineH; });
   }
 
-  // ── COVER PAGE ──
+  function sectionTitle(text) {
+    chk(18);
+    font('bold', 13, 15, 27, 53);
+    doc.text(ro(text), M, y); y += 5;
+    doc.setDrawColor(232, 160, 32); doc.setLineWidth(0.7);
+    doc.line(M, y, W - M, y); y += 7;
+  }
+
+  function subTitle(text) {
+    chk(12);
+    font('bold', 11, 15, 27, 53);
+    doc.text(ro(text), M, y); y += 6;
+  }
+
+  function bodyText(text, indent) {
+    indent = indent || 0;
+    font('normal', 10, 50, 60, 75);
+    block(text, indent, 5.5);
+    y += 2;
+  }
+
+  function note(text) {
+    chk(10);
+    font('italic', 9.5, 80, 90, 110);
+    block('Temei legal: ' + text, 0, 5);
+    y += 3;
+  }
+
+  function divider() {
+    chk(6);
+    doc.setDrawColor(220, 228, 240); doc.setLineWidth(0.3);
+    doc.line(M, y, W - M, y); y += 6;
+  }
+
+  // ════════════════════════════════
+  // COPERTA
+  // ════════════════════════════════
   doc.setFillColor(15, 27, 53);
   doc.rect(0, 0, W, 297, 'F');
   doc.setFillColor(232, 160, 32);
-  doc.rect(0, 240, W, 57, 'F');
+  doc.rect(0, 248, W, 49, 'F');
 
-  setFont('bold', 11, [232, 160, 32]);
-  doc.text('EVOTRAINHUB · APTIX ACADEMY', margin, 50);
-  setFont('bold', 26, [255, 255, 255]);
-  const titleLines = doc.splitTextToSize('AI Ethics & Compliance', cw);
-  doc.text(titleLines, margin, 70);
-  setFont('bold', 18, [200, 218, 240]);
-  doc.text('Raport Individual de Formare', margin, 96);
+  font('bold', 28, 255, 255, 255);
+  doc.text('AI Ethics & Compliance', M, 68);
+  font('bold', 17, 200, 218, 240);
+  doc.text('Ghid de raspunsuri corecte si recomandari', M, 82);
+  font('normal', 12, 200, 218, 240);
+  doc.text('Material de referinta — Studiu de Caz Interactiv', M, 94);
 
-  setFont('normal', 12, [200, 218, 240]);
-  doc.text('Studiu de Caz Interactiv — Rezultate', margin, 114);
-
-  // Score circle
-  doc.setFillColor(232, 160, 32);
-  doc.circle(W - margin - 22, 80, 22, 'F');
-  setFont('bold', 22, [15, 27, 53]);
-  doc.text(String(S.score), W - margin - 22, 79, { align: 'center' });
-  setFont('normal', 9, [15, 27, 53]);
-  doc.text('/ 100', W - margin - 22, 87, { align: 'center' });
-  doc.text('puncte', W - margin - 22, 93, { align: 'center' });
-
-  const mcqOk = Object.values(S.answers).filter(a => a.correct).length;
-  const mcqTotal = Object.keys(S.answers).length;
   const d = new Date();
-  setFont('normal', 10, [15, 27, 53]);
-  doc.text('Data: ' + d.toLocaleDateString('ro-RO'), margin, 260);
-  doc.text('Răspunsuri corecte: ' + mcqOk + '/' + mcqTotal, margin, 268);
-  doc.text('Reguli aplicate: ' + S.rulesChecked + '/10', margin + 80, 260);
-  doc.text('Secțiuni politică: ' + S.policyFilled + '/5', margin + 80, 268);
+  font('normal', 10, 15, 27, 53);
+  doc.text('Data participarii: ' + d.toLocaleDateString('ro-RO'), M, 262);
+  font('bold', 10, 15, 27, 53);
+  doc.text('Scor obtinut: ' + S.score + ' / 100 puncte', M, 272);
+  const verdict = S.score >= 80 ? 'Expert AI Compliance' : S.score >= 55 ? 'Practician AI Responsabil' : 'In formare — continua sa inveti!';
+  doc.text('Nivel: ' + verdict, M, 280);
 
-  setFont('bold', 11, [15, 27, 53]);
-  let verdict = S.score >= 80 ? 'Expert AI Compliance' : S.score >= 55 ? 'Practician AI Responsabil' : 'Continuă să înveți!';
-  doc.text('Nivel obținut: ' + verdict, margin, 282);
+  // ════════════════════════════════
+  // PAGINA 2 — MODULUL 1
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 1 - Fundamente Etice: raspunsuri corecte si explicatii');
 
-  // ── PAGE 2: Detaliu Răspunsuri ──
-  newPage();
-  setFont('bold', 16, [15, 27, 53]);
-  doc.text('Rezultate pe Module', margin, y); y += 10;
-  doc.setDrawColor(232, 160, 32); doc.setLineWidth(0.8);
-  doc.line(margin, y, W - margin, y); y += 8;
+  subTitle('Scenariul A - Sistem AI HR care respinge automat CV-uri');
+  bodyText('Raspuns corect: Problematic - lipsesc interventia umana si explicatiile.');
+  bodyText('Explicatie: Un sistem AI care respinge CV-uri fara nicio implicare umana si fara a furniza o explicatie candidatilor incalca doua cadre legale majore simultan. Art. 22 din GDPR interzice deciziile bazate exclusiv pe prelucrarea automata care produc efecte semnificative asupra unei persoane — respingerea unei candidaturi se incadreaza clar in aceasta categorie. In plus, EU AI Act clasifica sistemele de recrutare AI ca sisteme de risc inalt (Anexa III), impunand obligatia de supervizare umana (Art. 14) si de explicabilitate (XAI). Solutia corecta: revizuire umana obligatorie pentru toate deciziile de respingere, plus activarea functiei XAI pentru ca fiecare candidat respins sa primeasca o explicatie inteligibila.');
+  note('Art. 22 GDPR (decizie automata) + EU AI Act Anexa III, Art. 14 (supervizare umana risc inalt)');
+  divider();
 
-  const moduleNames = {
-    q1a:'Modulul 1 · Scenariu A — HR fără intervenție umană',
-    q1b:'Modulul 1 · Scenariu B — AI în triaj medical',
-    q1c:'Modulul 1 · Scenariu C — Monitorizare fără informare',
-    q4a:'Modulul 4 · RetailCo — AI Recrutare',
-    q4b:'Modulul 4 · RetailCo — Chatbot HR & SUA',
-    q4c:'Modulul 4 · RetailCo — Monitorizare Productivitate',
-    q4d:'Modulul 4 · RetailCo — Risc financiar combinat'
-  };
+  subTitle('Scenariul B - AI pentru triaj medical, cu validare medicala si informarea pacientilor');
+  bodyText('Raspuns corect: Etic - interventie umana, transparenta, validare medicala.');
+  bodyText('Explicatie: Acest scenariu descrie utilizarea responsabila a AI intr-un domeniu de risc inalt. Cheia este prezenta a trei garantii obligatorii: (1) medicul valideaza fiecare decizie AI inainte de aplicare — supervizare umana conform EU AI Act Art. 14; (2) pacientii sunt informati despre utilizarea AI — transparenta conform Art. 50 EU AI Act si principiului din GDPR Art. 5(1)(a); (3) implicita existenta explicabilitatii, deoarece medicul poate justifica decizia. Concluzie: EU AI Act nu interzice AI in medicina — il reglementeaza strict. Atunci cand garantiile sunt respectate, utilizarea este conforma si benefica.');
+  note('EU AI Act Art. 14 (supervizare umana), Art. 50 (transparenta), GDPR Art. 5(1)(a)');
+  divider();
 
-  for (const [qId, ans] of Object.entries(S.answers)) {
-    checkY(18);
-    const label = moduleNames[qId] || qId;
-    const ok = ans.correct;
-    doc.setFillColor(ok ? 212 : 248, ok ? 240 : 215, ok ? 227 : 213);
-    doc.roundedRect(margin, y - 5, cw, 13, 2, 2, 'F');
-    setFont('bold', 10, ok ? [26, 122, 74] : [192, 57, 43]);
-    doc.text((ok ? '✓  ' : '✗  ') + label, margin + 4, y + 3);
-    setFont('normal', 10, [60, 60, 60]);
-    doc.text(ok ? 'Răspuns corect' : 'Răspuns incorect', W - margin - 4, y + 3, { align: 'right' });
-    y += 17;
-  }
+  subTitle('Scenariul C - Monitorizare productivitate angajati remote, fara informare prealabila');
+  bodyText('Raspuns corect: Problematic - lipsesc informarea si baza legala.');
+  bodyText('Explicatie: Dreptul angajatorului de a monitoriza productivitatea nu elimina obligatiile GDPR. Art. 13 impune informarea persoanelor vizate in momentul colectarii datelor, specificand: scopul prelucrarii, temeiul legal, perioadele de retentie, drepturile disponibile. Art. 5(1)(a) stabileste principiul transparentei ca fundament al intregului GDPR. Monitorizarea comportamentului angajatilor prin AI (miscari mouse, pauze) poate constitui si o practica de risc inalt conform EU AI Act, daca se foloseste la evaluarea performantei. Solutia corecta: notificare scrisa a angajatilor inainte de implementare, documentarea temeiului legal, limitarea datelor colectate la strictul necesar (principiul minimizarii — Art. 5(1)(c) GDPR).');
+  note('GDPR Art. 13 (informare la colectare), Art. 5(1)(a) (transparenta), Art. 5(1)(c) (minimizare date)');
 
-  // Risk classification
-  y += 4; checkY(12);
-  setFont('bold', 12, [15, 27, 53]); doc.text('Modulul 2 · Clasificare Risc EU AI Act', margin, y); y += 7;
-  const riskLevelsNamed = { interzis:'Risc Inacceptabil — Interzis', inalt:'Risc Înalt', limitat:'Risc Limitat', minim:'Risc Minim' };
-  for (let i = 0; i < 6; i++) {
-    checkY(8);
-    const got = S.riskPlacement[i];
-    const correct = RISK_CORRECT[i];
-    const ok = got === correct;
-    setFont('normal', 10, ok ? [26, 122, 74] : [150, 50, 50]);
-    doc.text((ok ? '✓ ' : '✗ ') + RISK_NAMES[i] + ': ' + (got ? riskLevelsNamed[got] : 'neplasat') + (ok ? '' : ' (corect: ' + riskLevelsNamed[correct] + ')'), margin + 2, y);
-    y += 7;
-  }
+  // ════════════════════════════════
+  // PAGINA 3 — MODULUL 2
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 2 - Clasificare risc EU AI Act: raspunsuri corecte');
 
-  // Sanctions
-  y += 4; checkY(12);
-  setFont('bold', 12, [15, 27, 53]); doc.text('Modulul 3 · Asociere Sancțiuni', margin, y); y += 7;
-  const sanctionLeftLabels = ['Sistem AI interzis','Risc înalt neconform','Breșă GDPR','Info false autorități'];
-  const sanctionRightLabels = ['€15M/3% CA','€35M/7% CA','€20M/4% CA','€7,5M/1,5% CA'];
-  [0,1,2,3].forEach(i => {
-    checkY(8);
-    const ok = S.sanctionMatched[i] === SANCTION_CORRECT[i];
-    setFont('normal', 10, ok ? [26, 122, 74] : [150, 50, 50]);
-    const correctRight = sanctionRightLabels[SANCTION_CORRECT[i]];
-    doc.text((ok ? '✓ ' : '✗ ') + sanctionLeftLabels[i] + ' → ' + correctRight, margin + 2, y);
-    y += 7;
-  });
+  bodyText('EU AI Act organizeaza sistemele AI pe o piramida cu 4 niveluri de risc. Clasificarea corecta a fiecarui sistem este prezentata mai jos, cu justificarea temeiului legal.');
+  y += 3;
 
-  // ── PAGE 3: Politica Internă ──
-  newPage();
-  setFont('bold', 16, [15, 27, 53]); doc.text('Modulul 5 · Politica Internă AI — Schița Ta', margin, y); y += 8;
-  doc.setDrawColor(232, 160, 32); doc.line(margin, y, W - margin, y); y += 8;
-
-  const polIds = ['pol1','pol2','pol3','pol4','pol5'];
-  const polTitles = ['§1 Scop și domeniu de aplicare','§2 Sisteme aprobate vs. interzise','§3 Reguli pe categorii de date','§4 Responsabilități','§5 Raportare incidente & Sancțiuni'];
-  polIds.forEach((id, i) => {
-    const val = document.getElementById(id).value.trim();
-    checkY(20);
-    setFont('bold', 11, [15, 27, 53]); doc.text(polTitles[i], margin, y); y += 6;
-    setFont('normal', 10, [60, 70, 85]);
-    const text = val || '(necompleta)';
-    const lines = doc.splitTextToSize(text, cw);
-    lines.forEach(line => { checkY(7); doc.text(line, margin, y); y += 6; });
-    y += 4;
-  });
-
-  // ── PAGE 4: Reguli & Angajament ──
-  newPage();
-  setFont('bold', 16, [15, 27, 53]); doc.text('Modulul 6 · Cele 10 Reguli & Angajament', margin, y); y += 8;
-  doc.setDrawColor(232, 160, 32); doc.line(margin, y, W - margin, y); y += 8;
-
-  const rules = [
-    'Nu introduc date personale/confidențiale în AI publice',
-    'Verific output-ul AI înainte de publicare',
-    'Folosesc doar instrumentele AI aprobate',
-    'Declar utilizarea AI în documentele finale',
-    'Nu las AI să ia decizii finale cu impact juridic/uman',
-    'Verific sursele — AI poate halucina',
-    'Nu evaluez persoane prin AI fără supraveghere umană',
-    'Raportez imediat orice incident AI',
-    'Sunt prudent cu dreptul de autor pentru conținut AI',
-    'Îmi actualizez cunoștințele despre reglementările AI'
+  const riskData = [
+    ['Chatbot customer service retail', 'Risc Limitat (transparenta)', 'Chatbotii care interactioneaza cu utilizatori umani au obligatia de a se identifica ca sisteme AI. Nu este risc inalt, deoarece nu ia decizii cu impact semnificativ. Temei: EU AI Act Art. 50 — obligatie de informare.'],
+    ['Scoring credit bancar', 'Risc Inalt', 'Sistemele de evaluare a bonitatii si scoring de credit sunt explicit enumerate in Anexa III a EU AI Act ca sisteme de risc inalt. Obligatii: documentatie tehnica, supervizare umana, testare anti-bias, audit, inregistrare in baza de date UE.'],
+    ['Recunoastere faciala live in spatii publice', 'Risc Inacceptabil — Interzis', 'Art. 5 EU AI Act interzice identificarea biometrica in timp real in spatii publice, cu exceptii strict limitate (securitate nationala, investigatii judiciare). Interditia este activa din februarie 2025.'],
+    ['Recomandari muzica (Spotify)', 'Risc Minim', 'Sistemele de recomandare pentru continut de divertisment nu produc efecte semnificative asupra drepturilor sau vietii persoanelor. Nu sunt supuse obligatiilor specifice EU AI Act.'],
+    ['AI selectie CV-uri HR', 'Risc Inalt', 'Sistemele de recrutare si selectie AI sunt enumerate explicit in Anexa III. Obligatii: supervizare umana obligatorie, XAI activat, testare anti-bias, inregistrare in registrul UE.'],
+    ['Detectare emotii angajati la locul de munca', 'Risc Inacceptabil — Interzis', 'Art. 5 EU AI Act interzice explicit sistemele care detecteaza emotiile angajatilor sau elevilor in timp real pentru a lua decizii. Interditia este activa din februarie 2025.'],
   ];
-  const checks = document.querySelectorAll('.rule-check');
-  setFont('bold', 11, [15, 27, 53]);
-  doc.text('Reguli bifate ca aplicate deja (' + S.rulesChecked + '/10):', margin, y); y += 7;
-  rules.forEach((r, i) => {
-    checkY(8);
-    const checked = checks[i] && checks[i].textContent === '✅';
-    setFont('normal', 10, checked ? [26, 122, 74] : [150, 150, 150]);
-    doc.text((checked ? '✅ ' : '⬜ ') + r, margin + 2, y); y += 7;
+
+  riskData.forEach(([sistem, nivel, explicatie]) => {
+    chk(30);
+    font('bold', 10, 15, 27, 53);
+    doc.text(ro(sistem), M, y); y += 5;
+    font('bold', 10, 232, 160, 32);
+    doc.text(ro('Clasificare corecta: ' + nivel), M + 3, y); y += 5;
+    font('normal', 9.5, 60, 70, 85);
+    block(explicatie, 3, 5);
+    y += 4;
+    doc.setDrawColor(230, 235, 245); doc.setLineWidth(0.2);
+    doc.line(M, y, W - M, y); y += 5;
   });
 
-  y += 6; checkY(30);
-  doc.setFillColor(15, 27, 53);
-  doc.roundedRect(margin, y, cw, 35, 3, 3, 'F');
-  setFont('bold', 12, [232, 160, 32]);
-  doc.text('🎯 Angajamentul meu — 30 de zile', margin + 6, y + 10);
-  setFont('normal', 10, [200, 218, 240]);
-  const commitLines = doc.splitTextToSize(S.commitment || '(necompletat)', cw - 12);
-  let cy = y + 18;
-  commitLines.slice(0, 2).forEach(l => { doc.text(l, margin + 6, cy); cy += 7; });
+  // ════════════════════════════════
+  // PAGINA 4 — MODULUL 3
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 3 - Sanctiuni EU AI Act si GDPR: asocieri corecte');
 
-  // ── NUMĂR PAGINĂ pe toate paginile ──
+  bodyText('EU AI Act si GDPR prevad sanctiuni diferentiate in functie de gravitatea incalcarii. Retineti ca aceste sanctiuni nu se exclud reciproc — o organizatie poate cumula amenzi din ambele regulamente simultan, daca exista incalcari distincte.');
+  y += 4;
+
+  const sanctData = [
+    ['Sistem AI interzis operat (Art. 5 EU AI Act)', '35 milioane EUR sau 7% din cifra de afaceri globala anuala', 'Este cea mai severa sanctiune din EU AI Act, aplicabila operarii unui sistem din categoria risc inacceptabil (scoring social, manipulare, recunoastere emotii angajati, recunoastere faciala live). Se aplica suma mai mare dintre valoarea fixa si procentul din CA.'],
+    ['Sistem AI risc inalt neconform', '15 milioane EUR sau 3% din CA global', 'Se aplica organizatiilor care opereaza sisteme de risc inalt (recrutare, credit, sanatate, infrastructura critica) fara a indeplini obligatiile: documentatie tehnica, supervizare umana, testare anti-bias, audit, inregistrare in registrul UE.'],
+    ['Bresa GDPR legata de AI', '20 milioane EUR sau 4% din CA global', 'Cadrul GDPR (Art. 83) se aplica independent de EU AI Act. Procesarea datelor personale prin AI fara consimtamant, fara baza legala, fara DPIA sau cu transfer international ilegal atrage sanctiuni GDPR. Cumulabile cu sanctiunile EU AI Act.'],
+    ['Informatii false furnizate autoritatilor AI', '7,5 milioane EUR sau 1,5% din CA global', 'Sanctiunea cea mai mica, dar semnificativa: vizeaza organizatiile care induc in eroare Biroul European AI sau autoritatile nationale de supraveghere in cadrul auditurilor sau raportarilor obligatorii.'],
+  ];
+
+  sanctData.forEach(([incalcare, sanctiune, explicatie]) => {
+    chk(32);
+    font('bold', 10, 15, 27, 53);
+    doc.text(ro(incalcare), M, y); y += 5;
+    font('bold', 11, 192, 57, 43);
+    doc.text(ro('Sanctiune maxima: ' + sanctiune), M + 3, y); y += 5;
+    font('normal', 9.5, 60, 70, 85);
+    block(explicatie, 3, 5);
+    y += 4;
+    doc.setDrawColor(230, 235, 245); doc.setLineWidth(0.2);
+    doc.line(M, y, W - M, y); y += 5;
+  });
+
+  // ════════════════════════════════
+  // PAGINA 5 — MODULUL 4
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 4 - Studiu de caz RetailCo: raspunsuri corecte si solutii');
+
+  bodyText('RetailCo (2.000 angajati) a implementat trei sisteme AI fara politica interna sau evaluare de conformitate. Mai jos sunt prezentate incalcarile identificate si solutiile recomandate pentru fiecare sistem.');
+  y += 4;
+
+  const caseData = [
+    [
+      'Intrebarea 1 - AI de recrutare (respingere automata CV-uri)',
+      'Raspuns corect: Incalcare Art. 22 GDPR + EU AI Act risc inalt fara supervizare umana',
+      'Recrutarea AI este sistem de risc inalt (EU AI Act Anexa III). Respingerea automata fara revizuire umana incalca Art. 22 GDPR (decizie 100% automata cu efect semnificativ). Solutie: revizuire umana obligatorie pentru toate respingerile + activare XAI (candidatul primeste explicatie scrisa). Fara aceste masuri, organizatia risca pana la 15 milioane EUR sau 3% CA (EU AI Act) plus sanctiuni GDPR.'
+    ],
+    [
+      'Intrebarea 2 - Chatbot HR (date stocate in SUA fara SCC)',
+      'Raspuns corect: Semnarea Standard Contractual Clauses (SCC) sau migrare pe servere EU',
+      'GDPR Cap. V reglementeaza transferurile internationale de date. Dupa invalidarea Privacy Shield, transferul datelor personale in SUA necesita SCC sau alt mecanism adecvat. Fara SCC, fiecare conversatie stocata constituie un transfer ilegal. Solutie imediata: negocierea si semnarea SCC cu furnizorul. Solutie pe termen mediu: evaluarea migrarii infrastructurii pe servere europene.'
+    ],
+    [
+      'Intrebarea 3 - Monitorizare productivitate (fara informare)',
+      'Raspuns corect: Incalcare obligatiei de informare (Art. 13 GDPR) si principiului transparentei (Art. 5)',
+      'Art. 13 GDPR impune informarea persoanelor vizate la momentul colectarii datelor: scop, temei legal, perioada de retentie, drepturi. Art. 5(1)(a) consacra transparenta ca principiu fundamental. Solutie: notificare scrisa a angajatilor inainte de implementare + documentarea temeiului legal + minimizarea datelor colectate (Art. 5(1)(c)).'
+    ],
+    [
+      'Intrebarea 4 - Risc financiar combinat RetailCo',
+      'Raspuns corect: Sanctiuni cumulative EU AI Act + GDPR, potential zeci de milioane EUR',
+      'RetailCo risca simultan: (a) pana la 15M EUR / 3% CA pentru AI recrutare risc inalt neconform (EU AI Act); (b) pana la 20M EUR / 4% CA pentru transferul ilegal in SUA si monitorizarea fara informare (GDPR). Sanctiunile sunt independente si cumulabile. La acestea se adauga riscurile reputationale, litigiile individuale ale candidatilor respinsi si ale angajatilor monitorizati, si costurile de remediere tehnica.'
+    ],
+  ];
+
+  caseData.forEach(([titlu, raspuns, explicatie]) => {
+    chk(35);
+    font('bold', 10, 15, 27, 53);
+    doc.text(ro(titlu), M, y); y += 5;
+    font('bold', 10, 26, 122, 74);
+    block(raspuns, 3, 5.5);
+    y += 1;
+    font('normal', 9.5, 60, 70, 85);
+    block(explicatie, 3, 5);
+    y += 4;
+    doc.setDrawColor(230, 235, 245); doc.setLineWidth(0.2);
+    doc.line(M, y, W - M, y); y += 5;
+  });
+
+  // ════════════════════════════════
+  // PAGINA 6 — MODULUL 5 (Recomandari)
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 5 - Politica interna AI: recomandari pentru organizatia ta');
+
+  bodyText('O politica interna AI nu este un document de forma — este prima linie de aparare juridica si operationala a organizatiei. Mai jos sunt elementele esentiale pe care orice politica functionala trebuie sa le contina.');
+  y += 4;
+
+  const polRec = [
+    ['1. Scop si domeniu de aplicare', 'Politica trebuie sa precizeze clar: ce sisteme AI acopera (inclusiv instrumentele utilizate informal de angajati — shadow AI), cui se adreseaza (toti angajatii, inclusiv management), si cum se actualizeaza (recomandat: semestrial sau la orice implementare noua).'],
+    ['2. Lista sistemelor AI aprobate vs. interzise', 'Specificati concret instrumentele permise (cu conditiile de utilizare: ex. Microsoft Copilot cu cont corporate, Claude Enterprise cu SCC semnat) si cele interzise (ex. conturi personale ChatGPT cu date ale companiei). Ambiguitatea in aceasta sectiune genereaza shadow AI.'],
+    ['3. Reguli pe categorii de date', 'Date publice: permis in orice sistem aprobat. Date interne: numai in sisteme cu SCC sau hosting EU. Date confidentiale: interzis in sisteme externe. Date personale: necesita temei legal GDPR documentat + DPIA inainte de utilizare.'],
+    ['4. Responsabilitati clare', 'Fiecare rol trebuie sa aiba obligatii precise: CISO (audit trimestrial inventar AI), DPO (DPIA pentru sisteme noi, monitorizare GDPR), manageri de linie (informarea echipei, raportare incidente), angajati (respectarea regulilor, semnalarea abuzurilor).'],
+    ['5. Raportare incidente si sanctiuni interne', 'Definiti: canalul de raportare (email dedicat, platforma interna), termenul de raportare (recomandat: max. 24h de la descoperire), si consecintele nerespectarii (avertisment scris / suspendare acces / masuri disciplinare conform CCM). Fara sanctiuni clare, politica ramane fara efect.'],
+  ];
+
+  polRec.forEach(([titlu, rec]) => {
+    chk(30);
+    font('bold', 10, 15, 27, 53);
+    doc.text(ro(titlu), M, y); y += 5;
+    font('normal', 9.5, 60, 70, 85);
+    block(rec, 3, 5);
+    y += 5;
+  });
+
+  // ════════════════════════════════
+  // PAGINA 7 — MODULUL 6 (Recomandari)
+  // ════════════════════════════════
+  addPage();
+  sectionTitle('Modulul 6 - Cele 10 reguli si angajamentul de 30 de zile: recomandari');
+
+  bodyText('Cele 10 reguli de utilizare responsabila a AI reprezinta nucleul oricarei politici interne. Recomandam afisarea lor vizibila in birou si includerea lor in sesiunile de onboarding si training anual.');
+  y += 4;
+
+  const rulesRec = [
+    ['Regula 1', 'Nu introduceti date personale, confidentiale sau secrete de afaceri in sisteme AI publice. Aceasta este cea mai frecventa sursa de brese GDPR prin shadow AI — angajatii nu realizeaza ca inputurile pot fi folosite pentru antrenamentul modelelor, daca nu exista acorduri de confidentialitate specifice.'],
+    ['Regula 2', 'Verificati intotdeauna output-ul AI inainte de publicare sau utilizare. AI poate halucina fapte, cifre, date juridice si referinte bibliografice. Responsabilitatea pentru continutul publicat apartine intotdeauna persoanei, nu algoritmului.'],
+    ['Regula 3', 'Folositi exclusiv instrumentele AI aprobate de organizatie. Shadow AI (utilizarea neautorizata de instrumente AI) este cel mai rapid vector de scurgere a datelor confidentiale in prezent.'],
+    ['Regulile 4-10', 'Declarati utilizarea AI in documentele finale (acolo unde e relevant). Nu lasati AI sa ia decizii finale cu impact juridic sau uman. Verificati sursele. Nu evaluati persoane prin AI fara supervizare umana. Raportati imediat incidentele. Fiti precaut cu dreptul de autor. Actualizati-va cunostintele — reglementarile AI evolueaza rapid.'],
+  ];
+
+  rulesRec.forEach(([titlu, rec]) => {
+    chk(28);
+    font('bold', 10, 15, 27, 53);
+    doc.text(ro(titlu), M, y); y += 5;
+    font('normal', 9.5, 60, 70, 85);
+    block(rec, 3, 5);
+    y += 5;
+  });
+
+  divider();
+  subTitle('Angajamentul de 30 de zile: de ce conteaza');
+  bodyText('Schimbarea in organizatii nu vine din proiecte mari — vine din actiuni mici, repetate consecvent. Angajamentul de 30 de zile transforma intentia abstracta intr-un pas concret si masurabil. Recomandari de actiuni imediate: (1) Mapati toate instrumentele AI utilizate in echipa voastra. (2) Prezentati lista DPO-ului pentru evaluare. (3) Organizati o sesiune de 30 de minute cu colegii despre Shadow AI si regulile de utilizare. (4) Verificati daca organizatia are SCC semnat cu furnizorii AI. (5) Propuneti managementului adoptarea unui template de politica interna AI.');
+  y += 3;
+
+  // Scor si angajament personal (daca exista)
+  chk(25);
+  doc.setFillColor(15, 27, 53);
+  doc.roundedRect(M, y, cw, S.commitment && S.commitment.length > 5 ? 38 : 20, 3, 3, 'F');
+  font('bold', 11, 232, 160, 32);
+  doc.text('Scorul tau: ' + S.score + '/100 — ' + ro(verdict), M + 5, y + 10);
+  if (S.commitment && S.commitment.length > 5) {
+    font('normal', 9.5, 200, 218, 240);
+    const commitLines = doc.splitTextToSize(ro('Angajamentul tau: ' + S.commitment), cw - 10);
+    let cy = y + 19;
+    commitLines.slice(0,3).forEach(l => { doc.text(l, M + 5, cy); cy += 6; });
+  }
+
+  // ════════════════════════════════
+  // NUMERE PAGINI
+  // ════════════════════════════════
   const totalPages = doc.getNumberOfPages();
   for (let p = 1; p <= totalPages; p++) {
     doc.setPage(p);
-    setFont('normal', 8, [180, 180, 180]);
-    doc.text('Pagina ' + p + ' / ' + totalPages, W - margin, 291, { align: 'right' });
+    font('normal', 8, 180, 180, 180);
+    doc.text('Pagina ' + p + ' / ' + totalPages, W - M, 291, { align: 'right' });
   }
 
   const fname = 'AI_Ethics_Compliance_Raport_' + d.getFullYear() + String(d.getMonth()+1).padStart(2,'0') + String(d.getDate()).padStart(2,'0') + '.pdf';
